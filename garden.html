@@ -1,1 +1,192 @@
-<p>hello</p>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<title>SQLgarden</title>
+    <link rel="stylesheet" href="./garden.css">
+    <!--<script>
+        <?php
+            $server_name='localhost';
+            $username='root';
+            $password='';
+            $database_name='sqlgarden';
+
+            $conn=mysqli_connect($server_name,$username,$password,$database_name);
+            if (!$conn) {
+                die('Connection failed: ' . $conn->connect_error);
+            }
+        ?>
+
+        let data = {
+            "tools":
+                <?php
+                    $sql = 'SELECT * from tools;';
+                    $result=mysqli_query($conn, $sql);
+                    $newArr = array();
+                    while ($db_field = mysqli_fetch_assoc($result)) {
+                        $newArr[] = $db_field;
+                    }
+                    echo json_encode($newArr);
+                ?>.json()
+
+            "boosters":
+                <?php
+                    $sql = 'SELECT * from boosters;';
+                    $result=mysqli_query($conn, $sql);
+                    $newArr = array();
+                    while ($db_field = mysqli_fetch_assoc($result)) {
+                        $newArr[] = $db_field;
+                    }
+                    echo json_encode($newArr);
+                ?>.json()
+
+            "flowers":
+                <?php
+                    $sql = 'SELECT * from flowers;';
+                    $result=mysqli_query($conn, $sql);
+                    $newArr = array();
+                    while ($db_field = mysqli_fetch_assoc($result)) {
+                        $newArr[] = $db_field;
+                    }
+                    echo json_encode($newArr);
+                ?>.json()
+
+            "buildings":
+                <?php
+                    $sql = 'SELECT * from buildings;';
+                    $result=mysqli_query($conn, $sql);
+                    $newArr = array();
+                    while ($db_field = mysqli_fetch_assoc($result)) {
+                        $newArr[] = $db_field;
+                    }
+                    echo json_encode($newArr);
+                ?>.json()
+
+            "awards":
+                <?php
+                    $sql = 'SELECT * from awards;';
+                    $result=mysqli_query($conn, $sql);
+                    $newArr = array();
+                    while ($db_field = mysqli_fetch_assoc($result)) {
+                        $newArr[] = $db_field;
+                    }
+                    echo json_encode($newArr);
+                ?>.json()
+
+            "tiles":
+                <?php
+                    $sql = 'SELECT * from tiles;';
+                    $result=mysqli_query($conn, $sql);
+                    $newArr = array();
+                    while ($db_field = mysqli_fetch_assoc($result)) {
+                        $newArr[] = $db_field;
+                    }
+                    echo json_encode($newArr);
+                ?>.json()
+
+            "builts":
+                <?php
+                    $sql = 'SELECT * from builts;';
+                    $result=mysqli_query($conn, $sql);
+                    $newArr = array();
+                    while ($db_field = mysqli_fetch_assoc($result)) {
+                        $newArr[] = $db_field;
+                    }
+                    echo json_encode($newArr);
+                ?>.json()
+
+            "gamestates":
+                <?php
+                    $sql = 'SELECT * from gamestates;';
+                    $result=mysqli_query($conn, $sql);
+                    $newArr = array();
+                    while ($db_field = mysqli_fetch_assoc($result)) {
+                        $newArr[] = $db_field;
+                    }
+                    echo json_encode($newArr);
+                ?>.json()
+
+        }
+    </script>-->
+    <script src="./garden.js"></script>
+</head>
+<body>
+    <div id="money-display">O  50$</div>
+	<div id="ctrl-pane" onscroll="alterRadios();">
+        <div id="nav-bar">
+            <input id="tools-radio" type="radio" name="nav" value="tools"checked>
+            <label for="tools" onclick="navTo('tools-header')">TOOL</label>
+            <input id="boosters-radio" type="radio" name="nav" value="boosters">
+            <label for="boosters" onclick="navTo('boosters-header')">BOOST</label>
+            <input id="flowers-radio" type="radio" name="nav" value="flowers">
+            <label for="flowers" onclick="navTo('flowers-header')">FLOWER</label>
+            <input id="buildings-radio" type="radio" name="nav" value="buildings">
+            <label for="buildings" onclick="navTo('buildings-header')">BUILD</label>
+            <input id="awards-radio" type="radio" name="nav" value="awards">
+            <label for="awards" onclick="navTo('awards-header')">AWARD</label>
+        </div>
+        <div id="tools-header" class="ctrl-header">TOOLS</div>
+        <div class="ctrl-item">
+            <img class="item-img">
+            <div class="item-title">
+            
+            </div>
+        </div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+    
+        <div id="boosters-header" class="ctrl-header">BOOSTERS</div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div id="flowers-header" class="ctrl-header">FLOWERS</div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div id="buildings-header" class="ctrl-header">BUILDINGS</div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div id="awards-header" class="ctrl-header">AWARDS</div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+        <div class="ctrl-item"></div>
+    </div>
+	<div id="canvas-container">
+        <canvas id="backdrop-cvs"></canvas>
+        <canvas id="tiles-cvs"></canvas>
+        <canvas id="front"></canvas>
+        <canvas id="cursor-cvs"></canvas>
+    </div>
+    <div id="season-bar">
+        <div id="season-marker"></div>
+        <div class="skip-btn winter-skip winter-skip-left" onclick="skipToSeason(event)"></div>
+        <div class="skip-btn spring-skip" onclick="skipToSeason(event)">SPRING</div>
+        <div class="skip-btn summer-skip" onclick="skipToSeason(event)">SUMMER</div>
+        <div class="skip-btn autumn-skip" onclick="skipToSeason(event)" activeseason>AUTUMN</div>
+        <div class="skip-btn winter-skip winter-skip-right" onclick="skipToSeason(event)">WINTER</div>
+        <div class="skip-btn winter-skip winter-skip-right-left" onclick="skipToSeason(event)"></div>
+    </div>
+</body>
+</html>
