@@ -1,11 +1,11 @@
-let data = {
+let game_data = {
     "gamestates": [],
     "elapsed_time": 100000,
 }
 
-let global = {
-    "session_starttime": undefined,
-    "session_endtime": undefined,
+let session_data = {
+    "starttime": undefined,
+    "endtime": undefined,
 }
 
 const setCanvasSize = () => {
@@ -50,11 +50,11 @@ const skipToSeason = (evt) => {
 }
 
 
-let marker, elapsed_time, elapsed_years, elapsed_seasons, current_season, year_percentage, prevTimestamp = data.starttime;
+let elapsed_time, elapsed_years, elapsed_seasons, current_season, year_percentage, prevTimestamp;
 const ms_per_year = 120000*4;  // 2 mins per season
 const updateSeasonBar = (timestamp) => {
-    if (!global.session_starttime) {
-        global.session_starttime = timestamp;
+    if (!session_data.starttime) {
+        session_data.starttime = timestamp;
         prevTimestamp = timestamp;
         }
     if (!marker) {
@@ -62,7 +62,7 @@ const updateSeasonBar = (timestamp) => {
     }
 
     if (timestamp-prevTimestamp > 500) {
-        elapsed_time = timestamp - global.session_starttime + data.elapsed_time;
+        elapsed_time = timestamp - session_data.starttime + game_data.elapsed_time;
         console.log(elapsed_time);
         elapsed_years = Math.floor(elapsed_time / ms_per_year);
         elapsed_seasons = Math.floor(elapsed_time / (ms_per_year/4));
@@ -91,13 +91,39 @@ const updateDatabase = (table_name, data=[], drop=false) => {
     .then(responseData => {console.log(responseData)});
 }
 
+const updateCursor = (evt) => {
+    cursor_img.style.left = `${evt.pageX}px`;
+    cursor_img.style.top = `${evt.pageY}px`;
+    cursor_cross.style.left = `${evt.pageX}px`;
+    cursor_cross.style.top = `${evt.pageY}px`;
+}
+
+const populateShop = () => {
+
+}
+
+// declare element objects globally
+let canvas_cont, cursor_cross, cursor_img, marker;
 window.onload = () => {
-    window.onload = setCanvasSize();
+    // get element objects
+    canvas_cont = document.getElementById("canvas-container");
+    cursor_img = document.getElementById("cursor-img");
+    cursor_cross = document.getElementById("cursor-cross");
+    marker = document.getElementById("season-marker");
+
+
+    setCanvasSize();
+
+    populateShop();
+
+    canvas_cont.onmousemove = updateCursor;
+
+
     window.requestAnimationFrame(updateSeasonBar);
 }
 
 window.onresize = () => {
-    window.onresize = setCanvasSize();
+    setCanvasSize();
 }
 
 window.onbeforeunload = () => {

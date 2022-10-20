@@ -17,7 +17,7 @@
             }
         ?>
 
-        let data = {
+        const STATIC_DATA = {
             "tools":
                 <?php
                     $sql = 'SELECT * from tools;';
@@ -61,7 +61,8 @@
                     }
                     echo json_encode($newArr);
                 ?>.json()
-
+        }
+        let game_data = {
             "awards":
                 <?php
                     $sql = 'SELECT * from awards;';
@@ -111,7 +112,22 @@
     <script src="./garden.js"></script>
 </head>
 <body>
+    
     <div id="money-display">O  50$</div>
+    <div id="canvas-container">
+        <canvas id="backdrop-cvs"></canvas>
+        <canvas id="tiles-cvs"></canvas>
+        <canvas id="front"></canvas>
+        <canvas id="cursor-cvs"></canvas>
+    </div>
+    <img src="./images/cursors/cross.png" id="cursor-cross" class="cursor">
+    <img src="./images/cursors/water.png" id="cursor-img" class="cursor">
+
+    <div id="shelf">
+        
+    </div>
+
+
 	<div id="ctrl-pane" onscroll="alterRadios();">
         <div id="nav-bar">
             <input id="tools-radio" type="radio" name="nav" value="tools"checked>
@@ -126,59 +142,54 @@
             <label for="awards" onclick="navTo('awards-header')">AWARD</label>
         </div>
         <div id="tools-header" class="ctrl-header">TOOLS</div>
-        <div class="ctrl-item">
+        <div class="ctrl-item ctrl-square">
             <img class="item-img">
             <div class="item-title">
             
             </div>
         </div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
+        <div class="ctrl-item ctrl-square"></div>
+        <div class="ctrl-item ctrl-square"></div>
+        <div class="ctrl-item ctrl-square"></div>
+        <div class="ctrl-item ctrl-square"></div>
+        <div class="ctrl-item ctrl-square"></div>
     
         <div id="boosters-header" class="ctrl-header">BOOSTERS</div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
         <div id="flowers-header" class="ctrl-header">FLOWERS</div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
         <div id="buildings-header" class="ctrl-header">BUILDINGS</div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
+        <div class="ctrl-item ctrl-rect"></div>
         <div id="awards-header" class="ctrl-header">AWARDS</div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
-        <div class="ctrl-item"></div>
+        <div class="ctrl-item ctrl-square"></div>
+        <div class="ctrl-item ctrl-square"></div>
+        <div class="ctrl-item ctrl-square"></div>
+        <div class="ctrl-item ctrl-square"></div>
+        <div class="ctrl-item ctrl-square"></div>
+        <div class="ctrl-item ctrl-square"></div>
+        <div class="ctrl-item ctrl-square"></div>
+        <div class="ctrl-item ctrl-square"></div>
+        <div class="ctrl-item ctrl-square"></div>
+        <div class="ctrl-item ctrl-square"></div>
     </div>
-	<div id="canvas-container">
-        <canvas id="backdrop-cvs"></canvas>
-        <canvas id="tiles-cvs"></canvas>
-        <canvas id="front"></canvas>
-        <canvas id="cursor-cvs"></canvas>
-    </div>
+
     <div id="season-bar">
         <div id="season-marker"></div>
         <div class="skip-btn winter-skip winter-skip-left" onclick="skipToSeason(event)"></div>
