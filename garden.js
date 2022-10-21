@@ -1,3 +1,6 @@
+const STATIC_DATA = {
+
+}
 let game_data = {
     "gamestates": [],
     "elapsed_time": 100000,
@@ -22,7 +25,7 @@ const setCanvasSize = () => {
 
 const navTo = (id) => {
     const el = document.getElementById(id);
-    document.getElementById('ctrl-pane').scroll({
+    shop.scroll({
         top: el.offsetTop-50, 
         left: 0, 
         behavior: 'smooth'
@@ -30,8 +33,7 @@ const navTo = (id) => {
 }
 
 const alterRadios = () => {
-    const scroll_elem = document.getElementById("ctrl-pane");
-    const top = scroll_elem.scrollTop+150;
+    const top = shop.scrollTop+150;
     if (top < document.getElementById("boosters-header").offsetTop) {
         document.getElementById("tools-radio").checked = true;
     } else if (top < document.getElementById("flowers-header").offsetTop) {
@@ -98,23 +100,94 @@ const updateCursor = (evt) => {
     cursor_cross.style.top = `${evt.pageY}px`;
 }
 
-const populateShop = () => {
+const buildScene = () => {
 
+}
+const buildShop = () => {
+    for (let h of ["tools", "boosters", "flowers", "buildings", "awards"]) {
+        let header = document.createElement("div");
+        header.innerHTML = h.toUpperCase();
+        header.id = h + "-header";
+        header.class = "shop-header";
+        shop.appendChild(header);
+        let items = (h == "awards") ? game_data["awards"] : STATIC_DATA[h];
+        for (let i of items) {
+            let image = document.createElement("img");
+            image.src = "./images/shop/" + i["name"] + ".png";
+
+            let title = document.createElement("div");
+            title.class = "item-title";
+            title.innerHTML(i["name"]);
+
+            let desc = document.createElement("div");
+            desc.class = "item-desc";
+            desc.innerHTML(i["description"]);
+
+            let price = document.createElement("div");
+            price.class = "item-price";
+            price.innerHTML(i["price"]);
+
+            let item = document.createElement("div");
+            item.id = i["name"] + "-" + h + "-item";
+            item.class = "shop-item";
+            item.appendChild(title);
+            item.appendChild(desc);
+            item.appendChild(price);
+
+            shop.appendChild(item);
+        }
+    }
+    
+}
+const buildShelf = () => {
+   for (let i of game_data["shelf"]) {
+        let image = document.createElement("img");
+        image.src = "./images/items/" + i["name"] + ".png";
+
+        let title = document.createElement("div");
+        title.class = "item-title";
+        title.innerHTML(i["name"]);
+
+        let desc = document.createElement("div");
+        desc.class = "item-desc";
+        desc.innerHTML(i["description"]);
+
+        let price = document.createElement("div");
+        price.class = "item-count";
+        price.innerHTML(i["count"]);
+
+        let item = document.createElement("div");
+        item.id = i["name"] + "-shelf-item";
+        item.class = "shop-item";
+        item.appendChild(title);
+        item.appendChild(desc);
+        item.appendChild(price);
+
+        shop.appendChild(item);
+    }
+}
+
+const buildFromDatabase = () => {
+    buildScene();
+    buildShop();
+    buildShelf();
 }
 
 // declare element objects globally
-let canvas_cont, cursor_cross, cursor_img, marker;
+let canvas_cont, cursor_cross, cursor_img, marker, shop_pane;
 window.onload = () => {
     // get element objects
     canvas_cont = document.getElementById("canvas-container");
     cursor_img = document.getElementById("cursor-img");
     cursor_cross = document.getElementById("cursor-cross");
     marker = document.getElementById("season-marker");
+    shop = document.getElementById("shop");
+
 
 
     setCanvasSize();
 
-    populateShop();
+    buildFromDatabase();
 
     canvas_cont.onmousemove = updateCursor;
 

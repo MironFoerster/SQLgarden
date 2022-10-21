@@ -112,23 +112,31 @@
     <script src="./garden.js"></script>
 </head>
 <body>
+    <div id="top-bar">
+        <div id="money-display">O  50</div>
+        <div id="shelf">
+            <div class="shelf-item"></div>
+            <div class="shelf-item"></div>
+            <div class="shelf-item"></div>
+            <div class="shelf-item"></div>
+            <div class="shelf-item"></div>
+            <div class="shelf-item"></div>
+            <div class="shelf-item"></div>
+        </div>
+    </div>
     
-    <div id="money-display">O  50$</div>
     <div id="canvas-container">
         <canvas id="backdrop-cvs"></canvas>
+        <canvas id="background-cvs"></canvas>
         <canvas id="tiles-cvs"></canvas>
-        <canvas id="front"></canvas>
-        <canvas id="cursor-cvs"></canvas>
+        <canvas id="animate-cvs"></canvas>
+        <canvas id="hover-cvs"></canvas>
     </div>
     <img src="./images/cursors/cross.png" id="cursor-cross" class="cursor">
-    <img src="./images/cursors/water.png" id="cursor-img" class="cursor">
-
-    <div id="shelf">
-        
-    </div>
+    <img src="./images/cursors/spade.png" id="cursor-img" class="cursor">
 
 
-	<div id="ctrl-pane" onscroll="alterRadios();">
+	<div id="shop" onscroll="alterRadios();">
         <div id="nav-bar">
             <input id="tools-radio" type="radio" name="nav" value="tools"checked>
             <label for="tools" onclick="navTo('tools-header')">TOOL</label>
@@ -141,53 +149,55 @@
             <input id="awards-radio" type="radio" name="nav" value="awards">
             <label for="awards" onclick="navTo('awards-header')">AWARD</label>
         </div>
-        <div id="tools-header" class="ctrl-header">TOOLS</div>
-        <div class="ctrl-item ctrl-square">
-            <img class="item-img">
-            <div class="item-title">
-            
-            </div>
+        <div id="tools-header" class="shop-header">TOOLS</div>
+        <div class="shop-item">
+            <img src="./images/shop/spade.png">
+            <div class="item-title">Ultimate Spade</div>
+            <div class="item-desc">germprob +10%<br>deathprob -20%</div>
+            <div class="item-price">10.5</div>
         </div>
-        <div class="ctrl-item ctrl-square"></div>
-        <div class="ctrl-item ctrl-square"></div>
-        <div class="ctrl-item ctrl-square"></div>
-        <div class="ctrl-item ctrl-square"></div>
-        <div class="ctrl-item ctrl-square"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
     
-        <div id="boosters-header" class="ctrl-header">BOOSTERS</div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div id="flowers-header" class="ctrl-header">FLOWERS</div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div id="buildings-header" class="ctrl-header">BUILDINGS</div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div class="ctrl-item ctrl-rect"></div>
-        <div id="awards-header" class="ctrl-header">AWARDS</div>
-        <div class="ctrl-item ctrl-square"></div>
-        <div class="ctrl-item ctrl-square"></div>
-        <div class="ctrl-item ctrl-square"></div>
-        <div class="ctrl-item ctrl-square"></div>
-        <div class="ctrl-item ctrl-square"></div>
-        <div class="ctrl-item ctrl-square"></div>
-        <div class="ctrl-item ctrl-square"></div>
-        <div class="ctrl-item ctrl-square"></div>
-        <div class="ctrl-item ctrl-square"></div>
-        <div class="ctrl-item ctrl-square"></div>
+        <div id="boosters-header" class="shop-header">BOOSTERS</div>
+        <div class="shop-item">
+            <img src="./images/shop/spade.png">
+        </div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div id="flowers-header" class="shop-header">FLOWERS</div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div id="buildings-header" class="shop-header">BUILDINGS</div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div id="awards-header" class="shop-header">AWARDS</div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
+        <div class="shop-item"></div>
     </div>
 
     <div id="season-bar">
