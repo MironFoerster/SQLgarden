@@ -4,12 +4,17 @@ const STATIC_DATA = {
 let game_data = {
     "gamestates": [],
     "elapsed_time": 100000,
+    "tiles": [],
 }
 
 let session_data = {
     "starttime": undefined,
     "endtime": undefined,
 }
+
+let animation_data = [
+    {"starttime": none, "type": none, "x": none, "y": none, "color": none}
+]
 
 const setCanvasSize = () => {
     const cvs_list = document.getElementsByTagName("canvas");
@@ -100,8 +105,17 @@ const updateCursor = (evt) => {
     cursor_cross.style.top = `${evt.pageY}px`;
 }
 
+const addBuildingBoosters = () => {
+
+}
+
+const randomDecision = () => {
+
+}
+
 const buildScene = () => {
 
+    
 }
 const buildShop = () => {
     for (let h of ["tools", "boosters", "flowers", "buildings", "awards"]) {
@@ -171,6 +185,20 @@ const buildFromDatabase = () => {
     buildScene();
     buildShop();
     buildShelf();
+}
+
+const changeSeason = (to_season) => {
+    changeBackdrop(to_season);
+    // update overall probabilities...and stuff
+}
+
+const updateScene = () => {
+    // full redraw of game_data["tiles"]
+}
+
+const animationLoop = () => {
+
+    window.requestAnimationFrame(animationLoop);
 }
 
 // declare element objects globally
