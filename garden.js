@@ -1,11 +1,14 @@
 const STATIC_DATA = {
+    "tools":[], "boosters":[], "flowers":[], "buildings":[],
 
 }
 let game_data = {
     "gamestates": [],
     "elapsed_time": 100000,
     "tiles": [],
-    "current_season": 2;
+    "current_season": 2,
+    "awards": [],
+    "shelf": [],
 }
 
 let session_data = {
@@ -13,22 +16,8 @@ let session_data = {
     "endtime": undefined,
 }
 
-let animation_data = [
-    {"starttime": none, "type": none, "x": none, "y": none, "color": none}
-]
+let animation_data, transform_data, frame_data;
 
-let transform_data = {"x": canvas_cont.getComputedStyle().width,
-    "y": canvas_cont.getComputedStyle().height,
-    "scale": 1,
-};
-
-let frame_data = {
-    "width": window.getComputedStyle(canvas_cont).width,
-    "height": window.getComputedStyle(canvas_cont).height,
-    "corners": []
-}
-
-document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect = 'none';
 
 const setCanvasSize = () => {
     const cont_style = window.getComputedStyle(canvas_cont);
@@ -134,7 +123,7 @@ const buildShop = () => {
         let header = document.createElement("div");
         header.innerHTML = h.toUpperCase();
         header.id = h + "-header";
-        header.class = "shop-header";
+        header.className = "shop-header";
         shop.appendChild(header);
         let items = (h == "awards") ? game_data["awards"] : STATIC_DATA[h];
         for (let i of items) {
@@ -142,20 +131,20 @@ const buildShop = () => {
             image.src = "./images/shop/" + i["name"] + ".png";
 
             let title = document.createElement("div");
-            title.class = "item-title";
+            title.className = "item-title";
             title.innerHTML(i["name"]);
 
             let desc = document.createElement("div");
-            desc.class = "item-desc";
+            desc.className = "item-desc";
             desc.innerHTML(i["description"]);
 
             let price = document.createElement("div");
-            price.class = "item-price";
+            price.className = "item-price";
             price.innerHTML(i["price"]);
 
             let item = document.createElement("div");
             item.id = i["name"] + "-" + h + "-item";
-            item.class = "shop-item";
+            item.className = "shop-item";
             item.appendChild(title);
             item.appendChild(desc);
             item.appendChild(price);
@@ -166,25 +155,25 @@ const buildShop = () => {
     
 }
 const buildShelf = () => {
-   for (let i of game_data["shelf"]) {
+   for (let i of game_data.shelf) {
         let image = document.createElement("img");
         image.src = "./images/items/" + i["name"] + ".png";
 
         let title = document.createElement("div");
-        title.class = "item-title";
+        title.className = "item-title";
         title.innerHTML(i["name"]);
 
         let desc = document.createElement("div");
-        desc.class = "item-desc";
+        desc.className = "item-desc";
         desc.innerHTML(i["description"]);
 
         let price = document.createElement("div");
-        price.class = "item-count";
+        price.className = "item-count";
         price.innerHTML(i["count"]);
 
         let item = document.createElement("div");
         item.id = i["name"] + "-shelf-item";
-        item.class = "shop-item";
+        item.className = "shop-item";
         item.appendChild(title);
         item.appendChild(desc);
         item.appendChild(price);
@@ -206,6 +195,7 @@ const changeSeason = (to_season) => {
 
 const drawBackdrop = () => {
     // full redraw of backdrop
+    ctx = ctx_list[0] // backdrop context
     let img = document.getElementById("backdrop-season-"+parseInt(game_data.current_season));
     
     let x_num = Math.ceil((frame_data.corners[2] - frame_data.corners[0]) / 100) + 1;
@@ -224,6 +214,7 @@ const drawBackdrop = () => {
 
 const drawScene = () => {
     // full redraw of game_data["tiles"]
+    ctx = ctx_list[1] // scene context
     ctx.clearRect(
         ...frame_data.corners
     );
@@ -232,6 +223,7 @@ const drawScene = () => {
 
 const animationLoop = () => {
     // draw all current animations
+    ctx = ctx_list[2] // animations context
     ctx.clearRect(
         ...frame_data.corners
     );
@@ -259,8 +251,11 @@ const updateTransform = () => {
 }
 
 // declare element objects globally
-let canvas_cont, cursor_cross, cursor_img, marker, shop_pane, ui_cvs, cvs_list, ctx_list;
+let canvas_cont, cursor_cross, cursor_img, marker, shop_pane, ui_cvs, cvs_list;
+let ctx_list = [];
 window.onload = () => {
+    document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect = 'none';
+
     // get element objects
     canvas_cont = document.getElementById("canvas-container");
     cursor_img = document.getElementById("cursor-img");
@@ -269,14 +264,33 @@ window.onload = () => {
     shop = document.getElementById("shop");
     ui_cvs = document.getElementById("ui-cvs");
     cvs_list = document.getElementsByTagName("canvas");
-    ctx_list = cvs_list.map(cvs=>cvs.getContext("2d"));
+    for (let cvs of cvs_list) {
+        ctx_list.push(cvs.getContext("2d"));
+    }
+
+    animation_data = [
+        //{"starttime": undefined, "type": undefined, "x": undefined, "y": undefined, "color": undefined}
+    ]
+    
+    transform_data = {"x": window.getComputedStyle(canvas_cont).width/2,
+        "y": window.getComputedStyle(canvas_cont).height/2,
+        "scale": 1,
+    };
+    
+    frame_data = {
+        "width": window.getComputedStyle(canvas_cont).width,
+        "height": window.getComputedStyle(canvas_cont).height,
+        "corners": []
+    }
 
     let dragStart, prevPoint;
     ui_cvs.onmousedown = (evt) => {dragStart=true; prevPoint={"x": evt.offsetX, "y": evt.offsetY}};
     ui_cvs.onmousemove = (evt) => {
-        transform_data.x += evt.offsetX - prevPoint.x;
-        transform_data.y += evt.offsetY - prevPoint.y;
-        updateTransform();
+        if (dragStart){
+            transform_data.x += evt.offsetX - prevPoint.x;
+            transform_data.y += evt.offsetY - prevPoint.y;
+            updateTransform();
+        }
     };
     ui_cvs.onmouseup = () => {dragStart = false;};
 
@@ -294,6 +308,7 @@ window.onload = () => {
 
     canvas_cont.onmousemove = updateCursor;
 
+    updateTransform();
 
     window.requestAnimationFrame(updateSeasonBar);
     window.requestAnimationFrame(animationLoop);
@@ -306,171 +321,3 @@ window.onresize = () => {
 window.onbeforeunload = () => {
 
 }
-
-
-
-
-
-
-var canvas = document.getElementsByTagName('canvas')[0];
-	canvas.width = 800; canvas.height = 600;
-	var gkhead = new Image;
-	var ball   = new Image;
-	window.onload = function(){		
-		var ctx = canvas.getContext('2d');
-		trackTransforms(ctx);
-		function redraw(){
-			// Clear the entire canvas
-			var p1 = ctx.transformedPoint(0,0);
-			var p2 = ctx.transformedPoint(canvas.width,canvas.height);
-			ctx.clearRect(p1.x,p1.y,p2.x-p1.x,p2.y-p1.y);
-
-			// Alternatively:
-			// ctx.save();
-			// ctx.setTransform(1,0,0,1,0,0);
-			// ctx.restore();
-
-			ctx.drawImage(gkhead,200,50);
-
-			ctx.beginPath();
-			ctx.lineWidth = 6;
-			ctx.moveTo(399,250);
-			ctx.lineTo(474,256);
-			ctx.stroke();
-
-			ctx.save();
-			ctx.translate(4,2);
-			ctx.beginPath();
-			ctx.lineWidth = 1;
-			ctx.moveTo(436,253);
-			ctx.lineTo(437.5,233);
-			ctx.stroke();
-
-			ctx.save();
-			ctx.translate(438.5,223);
-			ctx.strokeStyle = '#06c';
-			ctx.beginPath();
-			ctx.lineWidth = 0.05;
-			for (var i=0;i<60;++i){
-				ctx.rotate(6*i*Math.PI/180);
-				ctx.moveTo(9,0);
-				ctx.lineTo(10,0);
-				ctx.rotate(-6*i*Math.PI/180);
-			}
-			ctx.stroke();
-			ctx.restore();
-
-			ctx.beginPath();
-			ctx.lineWidth = 0.2;
-			ctx.arc(438.5,223,10,0,Math.PI*2);
-			ctx.stroke();
-			ctx.restore();
-			
-			ctx.drawImage(ball,379,233,40,40);
-			ctx.drawImage(ball,454,239,40,40);
-			ctx.drawImage(ball,310,295,20,20);
-			ctx.drawImage(ball,314.5,296.5,5,5);
-			ctx.drawImage(ball,319,297.2,5,5);
-		}
-		redraw();
-		
-		var lastX=canvas.width/2, lastY=canvas.height/2;
-		var dragStart,dragged;
-		canvas.addEventListener('mousedown',function(evt){
-			document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect = 'none';
-			lastX = evt.offsetX || (evt.pageX - canvas.offsetLeft);
-			lastY = evt.offsetY || (evt.pageY - canvas.offsetTop);
-			dragStart = ctx.transformedPoint(lastX,lastY);
-			dragged = false;
-		},false);
-		canvas.addEventListener('mousemove',function(evt){
-			lastX = evt.offsetX || (evt.pageX - canvas.offsetLeft);
-			lastY = evt.offsetY || (evt.pageY - canvas.offsetTop);
-			dragged = true;
-			if (dragStart){
-				var pt = ctx.transformedPoint(lastX,lastY);
-				ctx.translate(pt.x-dragStart.x,pt.y-dragStart.y);
-				redraw();
-			}
-		},false);
-		canvas.addEventListener('mouseup',function(evt){
-			dragStart = null;
-			if (!dragged) zoom(evt.shiftKey ? -1 : 1 );
-		},false);
-
-		var scaleFactor = 1.1;
-		var zoom = function(clicks){
-			var pt = ctx.transformedPoint(lastX,lastY);
-			ctx.translate(pt.x,pt.y);
-			var factor = Math.pow(scaleFactor,clicks);
-			ctx.scale(factor,factor);
-			ctx.translate(-pt.x,-pt.y);
-			redraw();
-		}
-
-		var handleScroll = function(evt){
-			var delta = evt.wheelDelta ? evt.wheelDelta/40 : evt.detail ? -evt.detail : 0;
-			if (delta) zoom(delta);
-			return evt.preventDefault() && false;
-		};
-		canvas.addEventListener('DOMMouseScroll',handleScroll,false);
-		canvas.addEventListener('mousewheel',handleScroll,false);
-	};
-	
-	// Adds ctx.getTransform() - returns an SVGMatrix
-	// Adds ctx.transformedPoint(x,y) - returns an SVGPoint
-	function trackTransforms(ctx){
-		var svg = document.createElementNS("http://www.w3.org/2000/svg",'svg');
-		var xform = svg.createSVGMatrix();
-		ctx.getTransform = function(){ return xform; };
-		
-		var savedTransforms = [];
-		var save = ctx.save;
-		ctx.save = function(){
-			savedTransforms.push(xform.translate(0,0));
-			return save.call(ctx);
-		};
-		var restore = ctx.restore;
-		ctx.restore = function(){
-			xform = savedTransforms.pop();
-			return restore.call(ctx);
-		};
-
-		var scale = ctx.scale;
-		ctx.scale = function(sx,sy){
-			xform = xform.scaleNonUniform(sx,sy);
-			return scale.call(ctx,sx,sy);
-		};
-		var rotate = ctx.rotate;
-		ctx.rotate = function(radians){
-			xform = xform.rotate(radians*180/Math.PI);
-			return rotate.call(ctx,radians);
-		};
-		var translate = ctx.translate;
-		ctx.translate = function(dx,dy){
-			xform = xform.translate(dx,dy);
-			return translate.call(ctx,dx,dy);
-		};
-		var transform = ctx.transform;
-		ctx.transform = function(a,b,c,d,e,f){
-			var m2 = svg.createSVGMatrix();
-			m2.a=a; m2.b=b; m2.c=c; m2.d=d; m2.e=e; m2.f=f;
-			xform = xform.multiply(m2);
-			return transform.call(ctx,a,b,c,d,e,f);
-		};
-		var setTransform = ctx.setTransform;
-		ctx.setTransform = function(a,b,c,d,e,f){
-			xform.a = a;
-			xform.b = b;
-			xform.c = c;
-			xform.d = d;
-			xform.e = e;
-			xform.f = f;
-			return setTransform.call(ctx,a,b,c,d,e,f);
-		};
-		var pt  = svg.createSVGPoint();
-		ctx.transformedPoint = function(x,y){
-			pt.x=x; pt.y=y;
-			return pt.matrixTransform(xform.inverse());
-		}
-	}
