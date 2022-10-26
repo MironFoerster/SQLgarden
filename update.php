@@ -7,7 +7,7 @@ $database_name='sqlgarden';
 
 $conn=mysqli_connect($server_name,$username,$password,$database_name);
 if (!$conn) {
-   die('Connection failed: ' . $conn->connect_error);
+   die('Connection failed');
 }
 foreach ($_REQUEST['data'] as $row) {
   switch ($_REQUEST["table_name"]) {
