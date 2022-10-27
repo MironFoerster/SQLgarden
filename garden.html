@@ -113,7 +113,7 @@
 </head>
 <body>
     <div id="top-bar">
-        <div id="money-display">O  50</div>
+        <div id="money-display"><span style="font-size:0.7em;">&#128176;</span> 50</div>
         <div id="shelf">
             <div class="shelf-item"></div>
             <div class="shelf-item"></div>
@@ -131,9 +131,6 @@
         <canvas id="animate-cvs"></canvas>
         <canvas id="ui-cvs"></canvas>
     </div>
-    <img src="./images/cursors/cross.png" id="cursor-cross" class="cursor">
-    <img src="./images/cursors/spade.png" id="cursor-img" class="cursor">
-
 
 	<div id="shop" onscroll="alterRadios();">
         <div id="nav-bar">
@@ -174,9 +171,17 @@
         <div class="skip-btn winter-skip winter-skip-left" onclick="skipToSeason(event)"></div>
         <div class="skip-btn spring-skip" onclick="skipToSeason(event)">SPRING</div>
         <div class="skip-btn summer-skip" onclick="skipToSeason(event)">SUMMER</div>
-        <div class="skip-btn autumn-skip" onclick="skipToSeason(event)" activeseason>AUTUMN</div>
+        <div class="skip-btn autumn-skip activeseason" onclick="skipToSeason(event)">AUTUMN</div>
         <div class="skip-btn winter-skip winter-skip-right" onclick="skipToSeason(event)">WINTER</div>
         <div class="skip-btn winter-skip winter-skip-right-left" onclick="skipToSeason(event)"></div>
+    </div>
+    <div id="tile-info" class="popup">
+
+        <div id="tile-info-bottom"></div>
+    </div>
+    <div id="images" style="display:none;">
+        <img src="images/grass.png" id="backdrop-season-0">;
+        <img src="images/grass.png" id="backdrop-season-1">;
     </div>
 </body>
 </html>

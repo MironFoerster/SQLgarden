@@ -254,6 +254,12 @@ canvas {
     pointer-events: none;
 }
 
+#ui-cvs {
+    pointer-events: initial;
+    --cursorloc: url(images/cursors/lens.png);
+    cursor: var(--cursorloc), crosshair;
+}
+
 
 
 
@@ -368,15 +374,16 @@ input[type="radio"]:checked + label {
     z-index: 2;
 }
 
-.skip-btn::before {
+.skip-btn.activeseason::before {
     content: 'SKIP';
     position: absolute;
     right: 1em;
     opacity: inherit;
     transition: opacity 0.5s 0.2s;
+    display: block;
 }
 
-.skip-btn:not([activeseason]):before {
+.skip-btn::before {
     display: none;
 }
 
@@ -426,3 +433,47 @@ input[type="radio"]:checked + label {
 .winter-skip-right::before {
     content: "";
 }  
+
+
+/* popups */
+
+.popup {
+    grid-row: 1;
+    grid-column: 1;
+    align-self: center;
+    justify-self: center;
+    position: relative;
+    height: 40%;
+    width: 40%;
+    background-color: rgb(209, 187, 61);
+    z-index: 10;
+    border-radius: 20px;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(0);
+    transition: transform 0.3s, opacity 0.3s, visibility 0.3s;
+
+}
+
+.popup-active {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(-20px);
+}
+
+/*#tile-info-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, 100%);
+    width: 40px;
+    height: 60px;
+    background: inherit;
+}
+
+#tile-info-bottom::after,
+#tile-info-bottom::before {
+    width: 30px;
+    height: 30px;
+
+}*/
