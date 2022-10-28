@@ -477,3 +477,61 @@ input[type="radio"]:checked + label {
     height: 30px;
 
 }*/
+
+#awards-hover {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    height: 40px;
+    width: 40px;
+    border-radius: 20px;
+    z-index: 5;
+    background-color: rgba(118, 118, 118, 0);
+}
+
+#awards-hover:hover {
+    height: 300px;
+    width: 200px;
+}
+#awards-hider {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    height: 40px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: height 0.3s;
+    pointer-events: none;
+    overflow: hidden;
+    opacity: 1;
+}
+
+#awards-hover:hover #awards-hider {
+    height: 700px;
+}
+
+#awards {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-20px, -20px);
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    height: 300px;
+    width: 200px;
+    border-radius: 20px;
+    background-color: #6f5244;
+}
+
+#awards-title {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+}
+#awards-title::first-letter {
+    margin-right: 40px;
+}

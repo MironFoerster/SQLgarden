@@ -27,7 +27,7 @@ for (let img of flower_imgs) {
     const cvs = document.createElement("canvas");
     cvs.height = cvs.width = tile_size;
     const ctx = cvs.getContext("2d");
-    ctx.drawImage(document.getElementById("earth-img"));
+    ctx.drawImage(document.getElementsByClassName("earth-img")[0]);
     ctx.drawImage(img);
     flower_tiles[img.id] = cvs;
 }

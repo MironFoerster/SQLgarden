@@ -15,6 +15,7 @@
             if (!$conn) {
                 die('Connection failed: ' . $conn->connect_error);
             }
+            $shopArrs = array();
         ?>
 
         const STATIC_DATA = {
@@ -22,57 +23,74 @@
                 <?php
                     $sql = 'SELECT * from tools;';
                     $result=mysqli_query($conn, $sql);
-                    $newArr = array();
+                    $toolsArr = array();
                     while ($db_field = mysqli_fetch_assoc($result)) {
-                        $newArr[] = $db_field;
+                        $toolsArr[] = $db_field;
                     }
-                    echo json_encode($newArr);
-                ?>.json()
+                    $shopArrs[] = $toolsArr;
+                    echo json_encode($toolsArr);
+                ?>.json(),
 
             "boosters":
                 <?php
                     $sql = 'SELECT * from boosters;';
                     $result=mysqli_query($conn, $sql);
-                    $newArr = array();
+                    $boostersArr = array();
                     while ($db_field = mysqli_fetch_assoc($result)) {
-                        $newArr[] = $db_field;
+                        $boostersArr[] = $db_field;
                     }
-                    echo json_encode($newArr);
-                ?>.json()
+                    $shopArrs[] = $boostersArr;
+                    echo json_encode($boostersArr);
+                ?>.json(),
 
             "flowers":
                 <?php
                     $sql = 'SELECT * from flowers;';
                     $result=mysqli_query($conn, $sql);
-                    $newArr = array();
+                    $flowersArr = array();
                     while ($db_field = mysqli_fetch_assoc($result)) {
-                        $newArr[] = $db_field;
+                        $flowersArr[] = $db_field;
                     }
-                    echo json_encode($newArr);
-                ?>.json()
+                    $shopArrs[] = $flowersArr;
+                    echo json_encode($flowersArr);
+                ?>.json(),
 
             "buildings":
                 <?php
                     $sql = 'SELECT * from buildings;';
                     $result=mysqli_query($conn, $sql);
-                    $newArr = array();
+                    $buildingsArr = array();
                     while ($db_field = mysqli_fetch_assoc($result)) {
-                        $newArr[] = $db_field;
+                        $buildingsArr[] = $db_field;
                     }
-                    echo json_encode($newArr);
-                ?>.json()
+                    $shopArrs[] = $buildingsArr;
+                    echo json_encode($buildingsArr);
+                ?>.json(),
+            
+            
         }
         let game_data = {
             "awards":
                 <?php
                     $sql = 'SELECT * from awards;';
                     $result=mysqli_query($conn, $sql);
-                    $newArr = array();
+                    $awardsArr = array();
                     while ($db_field = mysqli_fetch_assoc($result)) {
-                        $newArr[] = $db_field;
+                        $awardsArr[] = $db_field;
                     }
-                    echo json_encode($newArr);
-                ?>.json()
+                    echo json_encode($awardsArr);
+                ?>.json(),
+
+            "shelf":
+                <?php
+                    $sql = 'SELECT * from shelf;';
+                    $result=mysqli_query($conn, $sql);
+                    $shelfArr = array();
+                    while ($db_field = mysqli_fetch_assoc($result)) {
+                        $shelfArr[] = $db_field;
+                    }
+                    echo json_encode($shelfArr);
+                ?>.json(),
 
             "tiles":
                 <?php
@@ -83,7 +101,7 @@
                         $newArr[] = $db_field;
                     }
                     echo json_encode($newArr);
-                ?>.json()
+                ?>.json(),
 
             "builts":
                 <?php
@@ -94,7 +112,7 @@
                         $newArr[] = $db_field;
                     }
                     echo json_encode($newArr);
-                ?>.json()
+                ?>.json(),
 
             "gamestates":
                 <?php
@@ -105,8 +123,7 @@
                         $newArr[] = $db_field;
                     }
                     echo json_encode($newArr);
-                ?>.json()
-
+                ?>.json(),
         }
     </script>-->
     <script src="./garden.js"></script>
@@ -122,6 +139,15 @@
             <div class="shelf-item"></div>
             <div class="shelf-item"></div>
             <div class="shelf-item"></div>
+        </div>
+    </div>
+
+    <div id="awards-hover">
+        <div id="awards-hider">
+            <div id="awards">
+                <span id="awards-title">&#127942;    AWARDS</span>
+                
+            </div>
         </div>
     </div>
     
@@ -152,6 +178,10 @@
             <div class="item-desc">germprob +10%<br>deathprob -20%</div>
             <div class="item-price">10.5</div>
         </div>
+
+        <!--<?php
+            
+        ?>-->
     
         <div id="boosters-header" class="shop-header">BOOSTERS</div>
         <div class="shop-item">
