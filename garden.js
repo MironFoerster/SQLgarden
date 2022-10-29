@@ -1,35 +1,17 @@
-const STATIC_DATA = {
-    "tools":[], "boosters":[], "flowers":[], "buildings":[],
-
-}
-let game_data = {
-    "gamestates": [],
-    "base_time": 100000,
-    "tiles": [],
-    "current_season": 1,
-    "awards": [],
-    "shelf": [],
-}
-
 let session_data = {
-    "starttime": undefined,
-    "endtime": undefined,
+    starttime: undefined,
+    endtime: undefined,
+    current_season: 1,
+    flower_predraws: []
 }
 
-for (let tile_idx in game_data.tiles) {
-    
-    game_data.tiles[tile_idx].image_cvs = cvs;
-}
-
-const flower_imgs = document.getElementsByClassName("flower-img");
-const flower_tiles = {};
-for (let img of flower_imgs) {
+for (let img of document.getElementsByClassName("shelf-flower-img")) {
     const cvs = document.createElement("canvas");
     cvs.height = cvs.width = tile_size;
     const ctx = cvs.getContext("2d");
     ctx.drawImage(document.getElementsByClassName("earth-img")[0]);
     ctx.drawImage(img);
-    flower_tiles[img.id] = cvs;
+    flower_predraws[img.id] = cvs;
 }
 
 
@@ -71,18 +53,18 @@ const alterRadios = () => {
 }
 
 const skipToSeason = (evt) => {
-    const skipped_time = 
+    const skipped_time = undefined;
 }
 
 
 const updateDatabase = (table_name, data=[], drop=false) => {
     fetch('/localhost/sqlgarden/update.php', {
         method: 'POST',
-        headers: {'ContentType': 'application/json'},
+        headers: {ContentType: 'application/json'},
         body: JSON.stringify({
-            'table_name': table_name,
-            'data': data,
-            'drop': drop
+            table_name: table_name,
+            data: data,
+            drop: drop
             })
         }
     )
@@ -103,75 +85,6 @@ const buildScene = () => {
 
     
 }
-const buildShop = () => {
-    for (let h of ["tools", "boosters", "flowers", "buildings", "awards"]) {
-        let header = document.createElement("div");
-        header.innerHTML = h.toUpperCase();
-        header.id = h + "-header";
-        header.className = "shop-header";
-        shop.appendChild(header);
-        let items = (h == "awards") ? game_data["awards"] : STATIC_DATA[h];
-        for (let i of items) {
-            let image = document.createElement("img");
-            image.src = "./images/shop/" + i["name"] + ".png";
-
-            let title = document.createElement("div");
-            title.className = "item-title";
-            title.innerHTML(i["name"]);
-
-            let desc = document.createElement("div");
-            desc.className = "item-desc";
-            desc.innerHTML(i["description"]);
-
-            let price = document.createElement("div");
-            price.className = "item-price";
-            price.innerHTML(i["price"]);
-
-            let item = document.createElement("div");
-            item.id = i["name"] + "-" + h + "-item";
-            item.className = "shop-item";
-            item.appendChild(title);
-            item.appendChild(desc);
-            item.appendChild(price);
-
-            shop.appendChild(item);
-        }
-    }
-    
-}
-const buildShelf = () => {
-   for (let i of game_data.shelf) {
-        let image = document.createElement("img");
-        image.src = "./images/items/" + i["name"] + ".png";
-
-        let title = document.createElement("div");
-        title.className = "item-title";
-        title.innerHTML(i["name"]);
-
-        let desc = document.createElement("div");
-        desc.className = "item-desc";
-        desc.innerHTML(i["description"]);
-
-        let price = document.createElement("div");
-        price.className = "item-count";
-        price.innerHTML(i["count"]);
-
-        let item = document.createElement("div");
-        item.id = i["name"] + "-shelf-item";
-        item.className = "shop-item";
-        item.appendChild(title);
-        item.appendChild(desc);
-        item.appendChild(price);
-
-        shop.appendChild(item);
-    }
-}
-
-const buildFromDatabase = () => {
-    buildScene();
-    buildShop();
-    buildShelf();
-}
 
 const changeSeason = (to_season) => {
     changeBackdrop(to_season);
@@ -182,7 +95,7 @@ const drawBackdrop = () => {
     // full redraw of backdrop
     const res = 500
     ctx = ctx_list[0] // backdrop context
-    let img = document.getElementById("backdrop-season-"+game_data.current_season);
+    let img = document.getElementById("backdrop-season-"+session_data.current_season);
     console.log(img);
     
     let x_num = Math.ceil((frame_data.corners[2] - frame_data.corners[0]) / res) + 1;
@@ -214,7 +127,7 @@ const drawScene = (tiles=undefined) => {
     for (let tile of tiles || game_data.tiles) {
         topleft = [-tilesize/2 + tile.locx * horz_dist, -tilesize/2 + tile.locy * vert_dist];
         if (tiles) {
-            ctx.clearRect(...topleft, ...topleft.map(v=>v+tile_size);
+            ctx.clearRect(...topleft, ...topleft.map(v=>v+tile_size));
         }
         ctx.drawImage(flower_tiles[tile.flower], ...topleft);
 
@@ -231,7 +144,7 @@ const animationLoop = (timestamp) => {
 }
 
 
-let elapsed_time, elapsed_years, elapsed_seasons, current_season, year_percentage, prevTimestamp;
+let elapsed_time, elapsed_years, elapsed_seasons, year_percentage, prevTimestamp;
 
 const ms_per_season = 120000;  // 2 mins per season
 const ms_per_year = ms_per_season*4;
@@ -241,13 +154,8 @@ const ms_per_update = ms_per_season / game_updates_per_season;
 
 let curr_gtime, prev_gtime, next_update_time;
 const gameLoop = (timestamp) => {
-    /*
-    if (!marker) {
-        marker = document.getElementById("season-marker");
-    }*/
-
     // check if update needed
-    curr_gtime = timestamp - session_data.starttime + game_data.base_time;
+    curr_gtime = timestamp - session_data.starttime + game_data.elapsedtime;
     next_update_time = Math.ceil(prev_gtime / ms_per_update) * ms_per_update;
     if (prev_gtime < next_update_time && next_update_time <= curr_gtime) {
         // update season bar
@@ -300,7 +208,7 @@ const gameLoop = (timestamp) => {
         
         elapsed_years = Math.floor(elapsed_time / ms_per_year);
         elapsed_seasons = Math.floor(elapsed_time / (ms_per_year/4));
-        current_season = elapsed_seasons % 4;
+        session_data.current_season = elapsed_seasons % 4;
 
     prev_gtime = curr_gtime;
     window.requestAnimationFrame(gameLoop);
@@ -325,6 +233,18 @@ const updateTransform = () => {
     // animations redraw themselves
 }
 
+const updateMoney = (amount) => {
+    game_data.money += amount;
+    document.getElementById("money-display").innerHTML = game_data.money;
+    // update state of shop items
+    let items = document.getElementsByClassName("buy-btn")
+
+    for (let i of items) {
+        i.classList.toggle("affordable", (parseFloat(i.querySelector("div").innerHTML)<game_data.money&&!i.classList.contains("affordable"))||
+                                         (parseFloat(i.querySelector("div").innerHTML)>game_data.money&&i.classList.contains("affordable")))
+    }
+}
+
 // declare element objects globally
 let canvas_cont, marker, shop_pane, ui_cvs, cvs_list;
 let ctx_list = [];
@@ -342,27 +262,27 @@ window.onload = () => {
     }
 
     animation_data = [
-        //{"starttime": undefined, "type": undefined, "x": undefined, "y": undefined, "color": undefined}
+        //{starttime: undefined, type: undefined, x: undefined, y: undefined, color: undefined}
     ]
     
-    transform_data = {"x": parseInt(window.getComputedStyle(canvas_cont).width)/2,
-        "y": parseInt(window.getComputedStyle(canvas_cont).height)/2,
-        "scale": 1,
+    transform_data = {x: parseInt(window.getComputedStyle(canvas_cont).width)/2,
+        y: parseInt(window.getComputedStyle(canvas_cont).height)/2,
+        scale: 1,
     };
     
     frame_data = {
-        "width": window.getComputedStyle(canvas_cont).width,
-        "height": window.getComputedStyle(canvas_cont).height,
-        "corners": []
+        width: window.getComputedStyle(canvas_cont).width,
+        height: window.getComputedStyle(canvas_cont).height,
+        corners: []
     }
 
     let dragStart, prevPoint;
-    ui_cvs.onmousedown = (evt) => {dragStart=true; prevPoint={"x": evt.offsetX, "y": evt.offsetY}};
+    ui_cvs.onmousedown = (evt) => {dragStart=true; prevPoint={x: evt.offsetX, y: evt.offsetY}};
     ui_cvs.onmousemove = (evt) => {
         if (dragStart){
             transform_data.x += evt.offsetX - prevPoint.x;
             transform_data.y += evt.offsetY - prevPoint.y;
-            prevPoint={"x": evt.offsetX, "y": evt.offsetY};
+            prevPoint={x: evt.offsetX, y: evt.offsetY};
             updateTransform();
         } else {
 
@@ -380,8 +300,9 @@ window.onload = () => {
     };
 
     setCanvasSize();
-
-    buildFromDatabase();
+    updateMoney(0);
+    //buildFromDatabase();
+    buildScene();
 
     updateTransform();
 
