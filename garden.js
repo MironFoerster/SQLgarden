@@ -9,14 +9,14 @@ let sess = {
     transform_y: 0,
     transform_scale: 1,
 
-    tiles_by_items: {},
+    items_hover_tiles: {},
     cvs_images: [],
     running_animations: [], //{starttime: undefined, type: undefined, x: undefined, y: undefined, color: undefined}
 
 
     dragging: false,
     current_action: undefined,
-    hovered_tile_pos: undefined,
+    hovered_tile: undefined,
     current_season: 1,
 
     vert_tile_dist: 50,
@@ -24,9 +24,33 @@ let sess = {
     tile_size: 30,  // not bigger than vert_tile_dist
 }
 
-const buildTilesByItems = () => {
-    for (let sect of ["tools", "boosters", "flowers", "buildings"]) {
-        
+const buildItemsHoverTiles = () => {
+    // create array for every shop item, populate if possible
+    sess.items_hover_tiles["spade"] = [];
+    sess.items_hover_tiles["sickle"] = [];
+    sess.items_hover_tiles["seedcollector"] = game_data.seeds_collected || [];
+
+    for (let building of STATIC_DATA.buildings) {
+        sess.items_hover_tiles[building.name] = [];
+        for (let built of game_data.builts) {
+            if (built.name == building.name) {
+                sess.items_hover_tiles[building.name].push([built.locx, built.locy]);
+            }
+        }
+    }
+
+    for (let sect of ["boosters", "flowers"]) {
+        for (let item of STATIC_DATA[sect]) {
+            sess.items_hover_tiles[item.name] = [];
+                for (let tile of game_data.tiles) {
+                    if (tile.boosters.includes(item.name) || tile.flower == item.name) {
+                        sess.items_hover_tiles[item.name].push([tile.locx, tile.locy]);
+                    }
+                    
+                }
+            }
+            
+        }
     }
 }
 
@@ -266,7 +290,7 @@ const updateMoney = (amount) => {
 }
 
 const handleMouseClick = (evt) => {
-    if (sess.hovered_tile_pos) {
+    if (sess.hovered_tile) {
         // handle clicks on tiles regarding current action
         switch (sess.current_action) {
             case "lens":
@@ -295,16 +319,48 @@ const handleMouseMove = (evt) => {
         
         let next_on_cvs = {x: next_on_tg.x*sess.horz_tile_dist + (next_on_tg.y%2)*(sess.horz_tile_dist/2),
                            y: next_on_tg.y*sess.vert_tile_dist};
-
-        if (Math.pow(next_on_cvs.x-cursor_on_cvs.x, 2) + Math.pow(next_on_cvs.y-cursor_on_cvs.y, 2) <= Math.pow(sess.tile_size/2, 2)) {
+        // Math.pow(next_on_cvs.x-cursor_on_cvs.x, 2) + Math.pow(next_on_cvs.y-cursor_on_cvs.y, 2) <= Math.pow(sess.tile_size/2, 2)
+        // if hovering a tile
+        sess.hovered_tile = game_data.tiles.find(t => t.locx == next_on_tg.x && t.locy == next_on_tg.y);
+        let hovering = false;
+        if (sess.hovered_tile) {
             // set hover based on current action
-            sess.hovered_tile_pos = {x: next_on_tg.x, y: next_on_tg.y};
-            sess.running_animations.push({starttime: undefined, type: "tile-hover", x: next_on_cvs.x, y: next_on_cvs.y, color: "white"});
+            // tools + flowers
+            if (sess.current_action.includes("tool") || sess.current_action.includes("flower") || sess.current_action.includes("shelf")) {
+                let 
+                if (!sess.items_hover_tiles[sess.current_action].find(t => t.locx == next_on_tg.x && t.locy == next_on_tg.y  &&
+                    !sess.tiles.find)) {
+                    sess.running_animations.push({starttime: undefined, type: "tile-hover", x: next_on_cvs.x, y: next_on_cvs.y, color: "white"});
+                } 
+            } else if (sess.current_action.includes("booster")) {
 
-        } else {
+            } else if (sess.current_action.includes("building")) {
+                
+            }
+        }
+        if (!hovering) {
+            // remove any hovering animations
             let i = sess.running_animations.findIndex(a => a.type === "tile-hover");
             if (i>-1) {sess.running_animations.splice(i, 1)}
-            sess.hovered_tile_pos = undefined;
+            sess.hovered_tile = undefined;
+        }
+    }
+}
+
+const changeCurrentActionTo = (to) => {
+    // to be "shelf-something" or "flower-something" or "booster-something"
+    if (!sess.current_action == "inspect") {
+        for (let el of document.getElementsByClassName("active-item")) {
+            el.classList.remove("active-item");
+        }
+    }
+
+    sess.current_action == to;
+    ui_cvs.style = "--cursorloc: url(images/cursors/"+to+".png);"
+
+    if (!to == "inspect") {
+        for (let el of document.getElementsById(to+"-item")) {
+            el.classList.add("active-item");
         }
     }
 }
@@ -343,6 +399,12 @@ window.onload = () => {
             updateTransform();
         }
     };
+    document.body.onkeyup = (evt) => {
+        if (evt.key === "Escape") {
+            // change current action to inspect
+            changeCurrentActionTo("inspect");
+        }
+    }
     gatherCvsImages();
 
     setCanvasSize();
