@@ -1,30 +1,52 @@
-let session_data = {
-    starttime: undefined,
-    endtime: undefined,
+// STATIC_DATA, game_data
+
+let sess = {
+    frame_rect: undefined,
+    cvs_width: undefined,
+    cvs_height: undefined,
+
+    transform_x: 0,
+    transform_y: 0,
+    transform_scale: 1,
+
+    tiles_by_items: {},
+    cvs_images: [],
+    running_animations: [], //{starttime: undefined, type: undefined, x: undefined, y: undefined, color: undefined}
+
+
+    dragging: false,
+    current_action: undefined,
+    hovered_tile_pos: undefined,
     current_season: 1,
-    flower_predraws: []
+
+    vert_tile_dist: 50,
+    horz_tile_dist: 60,
+    tile_size: 30,  // not bigger than vert_tile_dist
 }
 
-for (let img of document.getElementsByClassName("shelf-flower-img")) {
-    const cvs = document.createElement("canvas");
-    cvs.height = cvs.width = tile_size;
-    const ctx = cvs.getContext("2d");
-    ctx.drawImage(document.getElementsByClassName("earth-img")[0]);
-    ctx.drawImage(img);
-    flower_predraws[img.id] = cvs;
+const buildTilesByItems = () => {
+    for (let sect of ["tools", "boosters", "flowers", "buildings"]) {
+        
+    }
+}
+
+const gatherCvsImages = () => {
+    for (let flower of STATIC_DATA.flowers) {
+        sess.cvs_images[flower.name] = document.getElementById("shelf-"+flower.name+"-img");
+    }
 }
 
 
-let animation_data, transform_data, frame_data;
+let transform_data;
 
 
 const setCanvasSize = () => {
     const cont_style = window.getComputedStyle(canvas_cont);
-    frame_data.width = parseInt(cont_style.width);
-    frame_data.height = parseInt(cont_style.height);
+    sess.cvs_width = parseInt(cont_style.width);
+    sess.cvs_height = parseInt(cont_style.height);
     for (var cvs of cvs_list) {
-        cvs.width = frame_data.width;
-        cvs.height = frame_data.height;
+        cvs.width = sess.cvs_width;
+        cvs.height = sess.cvs_height;
     }
 }
 
@@ -93,17 +115,17 @@ const changeSeason = (to_season) => {
 
 const drawBackdrop = () => {
     // full redraw of backdrop
-    const res = 500
+    const res = 500 // backdrop 500x500
     ctx = ctx_list[0] // backdrop context
-    let img = document.getElementById("backdrop-season-"+session_data.current_season);
+    let img = document.getElementById("backdrop-season-"+sess.current_season);
     console.log(img);
     
-    let x_num = Math.ceil((frame_data.corners[2] - frame_data.corners[0]) / res) + 1;
-    let y_num = Math.ceil((frame_data.corners[3] - frame_data.corners[1]) / res) + 1;
+    let x_num = Math.ceil((sess.frame_rect[2]) / res) + 1;
+    let y_num = Math.ceil((sess.frame_rect[3]) / res) + 1;
     console.log(x_num, y_num);
 
-    let x_offset = Math.floor(frame_data.corners[0] / res);
-    let y_offset = Math.floor(frame_data.corners[1] / res);
+    let x_offset = Math.floor(sess.frame_rect[0] / res);
+    let y_offset = Math.floor(sess.frame_rect[1] / res);
     if (x_num * y_num < 200) {
     for (let i = 0; i < x_num; i++) {
         for (let j = 0; j < y_num; j++) {
@@ -113,23 +135,19 @@ const drawBackdrop = () => {
     }
 }
 
-const tile_size = 50; 
-const flower_size = 30;
-const vert_dist = 50;
-const horz_dist = 60;
 let topleft;
 const drawScene = (tiles=undefined) => {
     // full redraw of game_data["tiles"]
     ctx = ctx_list[1] // scene context
     if (!tiles) {
-        ctx.clearRect(...frame_data.corners);
+        ctx.clearRect(...sess.frame_rect);
     }
     for (let tile of tiles || game_data.tiles) {
-        topleft = [-tilesize/2 + tile.locx * horz_dist, -tilesize/2 + tile.locy * vert_dist];
+        topleft = [-sess.tile_size/2 + tile.locx * sess.horz_tile_dist + (tile.locy%2)*(sess.horz_tile_dist/2), -sess.tile_size/2 + tile.locy * sess.vert_tile_dist];
         if (tiles) {
             ctx.clearRect(...topleft, ...topleft.map(v=>v+tile_size));
         }
-        ctx.drawImage(flower_tiles[tile.flower], ...topleft);
+        ctx.drawImage(sess.cvs_images[tile.flower], ...topleft);
 
     }
 }
@@ -137,7 +155,7 @@ const drawScene = (tiles=undefined) => {
 const animationLoop = (timestamp) => {
     // draw all current animations
     ctx = ctx_list[2] // animations context
-    ctx.clearRect(...frame_data.corners);
+    ctx.clearRect(...sess.frame_rect);
 
 
     window.requestAnimationFrame(animationLoop);
@@ -151,15 +169,18 @@ const ms_per_year = ms_per_season*4;
 const game_updates_per_season = 100;
 const ms_per_update = ms_per_season / game_updates_per_season;
 
+const getSeasonParams = () => {
+    return undefined
+}
 
 let curr_gtime, prev_gtime, next_update_time;
 const gameLoop = (timestamp) => {
     // check if update needed
-    curr_gtime = timestamp - session_data.starttime + game_data.elapsedtime;
+    curr_gtime = timestamp + game_data.elapsedtime;
     next_update_time = Math.ceil(prev_gtime / ms_per_update) * ms_per_update;
     if (prev_gtime < next_update_time && next_update_time <= curr_gtime) {
         // update season bar
-        year_percentage = (curr_gtime % ms_per_year)/ms_per_year*100;
+        year_percentage = (curr_gtime % ms_per_year)*100/ms_per_year;
         marker.style.left = year_percentage.toString()+"%";
 
         // get global season parameters
@@ -208,7 +229,7 @@ const gameLoop = (timestamp) => {
         
         elapsed_years = Math.floor(elapsed_time / ms_per_year);
         elapsed_seasons = Math.floor(elapsed_time / (ms_per_year/4));
-        session_data.current_season = elapsed_seasons % 4;
+        //sess.current_season = elapsed_seasons % 4;
 
     prev_gtime = curr_gtime;
     window.requestAnimationFrame(gameLoop);
@@ -218,16 +239,15 @@ const updateTransform = () => {
     console.log("transform");
     for (let ctx of ctx_list) {
         ctx.resetTransform();
-        ctx.translate(transform_data.x, transform_data.y);
-        ctx.scale(transform_data.scale, transform_data.scale);
+        ctx.translate(sess.transform_x, sess.transform_y);
+        ctx.scale(sess.transform_scale, sess.transform_scale);
 
-        frame_data.corners = [-transform_data.x/transform_data.scale,
-            -transform_data.y/transform_data.scale,
-            (frame_data.width - transform_data.x)/transform_data.scale,
-            (frame_data.height - transform_data.y)/transform_data.scale
+        sess.frame_rect = [- sess.transform_x/sess.transform_scale,
+            - sess.transform_y/sess.transform_scale,
+            sess.cvs_width/sess.transform_scale,
+            sess.cvs_height/sess.transform_scale
         ]
     }
-    console.log(transform_data);
     drawBackdrop();
     drawScene();
     // animations redraw themselves
@@ -242,6 +262,50 @@ const updateMoney = (amount) => {
     for (let i of items) {
         i.classList.toggle("affordable", (parseFloat(i.querySelector("div").innerHTML)<game_data.money&&!i.classList.contains("affordable"))||
                                          (parseFloat(i.querySelector("div").innerHTML)>game_data.money&&i.classList.contains("affordable")))
+    }
+}
+
+const handleMouseClick = (evt) => {
+    if (sess.hovered_tile_pos) {
+        // handle clicks on tiles regarding current action
+        switch (sess.current_action) {
+            case "lens":
+                break;
+            case "spade":
+                break;
+        }
+
+    }
+}
+
+const handleMouseMove = (evt) => {
+    if (sess.dragging){
+        sess.transform_x += evt.offsetX - prevPoint.x;
+        sess.transform_y += evt.offsetY - prevPoint.y;
+        prevPoint={x: evt.offsetX, y: evt.offsetY};
+        updateTransform();
+    } else {
+        let cursor_on_cvs = {x: evt.offsetX/sess.transform_scale-sess.transform_x,
+                       y: evt.offsetY/sess.transform_scale-sess.transform_y};
+
+        let next_on_tg = {}; // tg = tile-grid
+
+        next_on_tg.y = Math.round(cursor_on_cvs.y/sess.vert_tile_dist);
+        next_on_tg.x = Math.round(cursor_on_cvs.x/sess.horz_tile_dist - (next_on_tg.y%2)*(sess.horz_tile_dist/2));
+        
+        let next_on_cvs = {x: next_on_tg.x*sess.horz_tile_dist + (next_on_tg.y%2)*(sess.horz_tile_dist/2),
+                           y: next_on_tg.y*sess.vert_tile_dist};
+
+        if (Math.pow(next_on_cvs.x-cursor_on_cvs.x, 2) + Math.pow(next_on_cvs.y-cursor_on_cvs.y, 2) <= Math.pow(sess.tile_size/2, 2)) {
+            // set hover based on current action
+            sess.hovered_tile_pos = {x: next_on_tg.x, y: next_on_tg.y};
+            sess.running_animations.push({starttime: undefined, type: "tile-hover", x: next_on_cvs.x, y: next_on_cvs.y, color: "white"});
+
+        } else {
+            let i = sess.running_animations.findIndex(a => a.type === "tile-hover");
+            if (i>-1) {sess.running_animations.splice(i, 1)}
+            sess.hovered_tile_pos = undefined;
+        }
     }
 }
 
@@ -260,44 +324,26 @@ window.onload = () => {
     for (let cvs of cvs_list) {
         ctx_list.push(cvs.getContext("2d"));
     }
-
-    animation_data = [
-        //{starttime: undefined, type: undefined, x: undefined, y: undefined, color: undefined}
-    ]
     
-    transform_data = {x: parseInt(window.getComputedStyle(canvas_cont).width)/2,
-        y: parseInt(window.getComputedStyle(canvas_cont).height)/2,
-        scale: 1,
-    };
-    
-    frame_data = {
-        width: window.getComputedStyle(canvas_cont).width,
-        height: window.getComputedStyle(canvas_cont).height,
-        corners: []
-    }
+    sess.transform_x =  parseInt(window.getComputedStyle(canvas_cont).width)/2;
+    sess.transform_y =  parseInt(window.getComputedStyle(canvas_cont).height)/2;
+    sess.transform_scale =  1;
 
-    let dragStart, prevPoint;
-    ui_cvs.onmousedown = (evt) => {dragStart=true; prevPoint={x: evt.offsetX, y: evt.offsetY}};
-    ui_cvs.onmousemove = (evt) => {
-        if (dragStart){
-            transform_data.x += evt.offsetX - prevPoint.x;
-            transform_data.y += evt.offsetY - prevPoint.y;
-            prevPoint={x: evt.offsetX, y: evt.offsetY};
-            updateTransform();
-        } else {
-
-        }
-    };
-    ui_cvs.onmouseup = () => {dragStart = false;};
+    ui_cvs.onmousedown = (evt) => {sess.dragging=true; prevPoint={x: evt.offsetX, y: evt.offsetY}};
+    ui_cvs.onmousemove = handleMouseMove;
+    ui_cvs.onmouseup = () => {sess.dragging = false;};
 
     ui_cvs.onwheel = (evt) => {
         d = -evt.deltaY * 10;
         let factor = Math.pow(1.001, d);
-        transform_data.x += (evt.offsetX - transform_data.x) * (1-factor);
-        transform_data.y += (evt.offsetY - transform_data.y) * (1-factor);
-        transform_data.scale *= factor;
-        updateTransform();
+        sess.transform_scale = Math.max(0.2, Math.min(factor * sess.transform_scale, 3));
+        if (sess.transform_scale < 3 && sess.transform_scale > 0.2) {
+            sess.transform_x += (evt.offsetX - sess.transform_x) * (1-factor);
+            sess.transform_y += (evt.offsetY - sess.transform_y) * (1-factor);
+            updateTransform();
+        }
     };
+    gatherCvsImages();
 
     setCanvasSize();
     updateMoney(0);
@@ -306,7 +352,6 @@ window.onload = () => {
 
     updateTransform();
 
-    window.requestAnimationFrame((stmp) => {session_data.starttime = stmp;});
     window.requestAnimationFrame(gameLoop);
     window.requestAnimationFrame(animationLoop);
 }

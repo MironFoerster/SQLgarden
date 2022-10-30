@@ -4,7 +4,7 @@
 	<meta charset="UTF-8" />
 	<title>SQLgarden</title>
     <link rel="stylesheet" href="./garden.css">
-    <!--<script>
+    <script>
         <?php
             $server_name='localhost';
             $username='root';
@@ -13,13 +13,13 @@
 
             $conn=mysqli_connect($server_name,$username,$password,$database_name);
             if (!$conn) {
-                die('Connection failed: ' . $conn->connect_error);
+                die('Connection failed');
             }
             $shopArrs = array();
         ?>
 
         const STATIC_DATA = {
-            "tools":
+            tools:
                 <?php
                     $sql = 'SELECT * from tools;';
                     $result=mysqli_query($conn, $sql);
@@ -29,9 +29,9 @@
                     }
                     $shopArrs[] = $toolsArr;
                     echo json_encode($toolsArr);
-                ?>.json(),
+                ?>,
 
-            "boosters":
+            boosters:
                 <?php
                     $sql = 'SELECT * from boosters;';
                     $result=mysqli_query($conn, $sql);
@@ -41,9 +41,9 @@
                     }
                     $shopArrs[] = $boostersArr;
                     echo json_encode($boostersArr);
-                ?>.json(),
+                ?>,
 
-            "flowers":
+            flowers:
                 <?php
                     $sql = 'SELECT * from flowers;';
                     $result=mysqli_query($conn, $sql);
@@ -53,9 +53,9 @@
                     }
                     $shopArrs[] = $flowersArr;
                     echo json_encode($flowersArr);
-                ?>.json(),
+                ?>,
 
-            "buildings":
+            buildings:
                 <?php
                     $sql = 'SELECT * from buildings;';
                     $result=mysqli_query($conn, $sql);
@@ -65,12 +65,17 @@
                     }
                     $shopArrs[] = $buildingsArr;
                     echo json_encode($buildingsArr);
-                ?>.json(),
-            
-            
+                ?>,            
         }
+        let gamestates = <?php
+                $sql = 'SELECT * from gamestates;';
+                $result=mysqli_query($conn, $sql);
+                echo json_encode(mysqli_fetch_assoc($result));
+            ?>
+        
+        Object.keys(gamestates).forEach(key=>{gamestates[key] = parseInt(gamestates[key])})
         let game_data = {
-            "awards":
+            awards:
                 <?php
                     $sql = 'SELECT * from awards;';
                     $result=mysqli_query($conn, $sql);
@@ -79,9 +84,9 @@
                         $awardsArr[] = $db_field;
                     }
                     echo json_encode($awardsArr);
-                ?>.json(),
+                ?>,
 
-            "shelf":
+            shelf:
                 <?php
                     $sql = 'SELECT * from shelf;';
                     $result=mysqli_query($conn, $sql);
@@ -90,9 +95,9 @@
                         $shelfArr[] = $db_field;
                     }
                     echo json_encode($shelfArr);
-                ?>.json(),
+                ?>,
 
-            "tiles":
+            tiles:
                 <?php
                     $sql = 'SELECT * from tiles;';
                     $result=mysqli_query($conn, $sql);
@@ -101,9 +106,9 @@
                         $newArr[] = $db_field;
                     }
                     echo json_encode($newArr);
-                ?>.json(),
+                ?>,
 
-            "builts":
+            builts:
                 <?php
                     $sql = 'SELECT * from builts;';
                     $result=mysqli_query($conn, $sql);
@@ -112,33 +117,29 @@
                         $newArr[] = $db_field;
                     }
                     echo json_encode($newArr);
-                ?>.json(),
+                ?>,
 
-            "gamestates":
-                <?php
-                    $sql = 'SELECT * from gamestates;';
-                    $result=mysqli_query($conn, $sql);
-                    $newArr = array();
-                    while ($db_field = mysqli_fetch_assoc($result)) {
-                        $newArr[] = $db_field;
-                    }
-                    echo json_encode($newArr);
-                ?>.json(),
+            ...gamestates
         }
-    </script>-->
+
+    </script>
     <script src="./garden.js"></script>
 </head>
 <body>
     <div id="top-bar">
         <div id="money-display"><span style="font-size:0.7em;">&#128176;</span> 50</div>
         <div id="shelf">
-            <div class="shelf-item"></div>
-            <div class="shelf-item"></div>
-            <div class="shelf-item"></div>
-            <div class="shelf-item"></div>
-            <div class="shelf-item"></div>
-            <div class="shelf-item"></div>
-            <div class="shelf-item"></div>
+            <?php
+            foreach ($flowersArr as $item) {
+                echo('<div class="shelf-item">');
+                    echo('<img class="shelf-flower-img item-img" id="shelf-'.$item["name"].'-img" src="./images/items/'.$item["name"].'.gif">');
+                    echo('<img class="seed-img item-img" src="./images/items/seed.gif">');
+                    echo('<div class="item-title">'.$item["name"].'</div>');
+                    echo('<div class="item-desc">'.$item["description"].'</div>');
+                    echo('<div class="amount-btn">'.$item["cost"].'</div>');
+                echo('</div>');
+            }
+            ?>
         </div>
     </div>
 
@@ -161,38 +162,52 @@
 	<div id="shop" onscroll="alterRadios();">
         <div id="nav-bar">
             <input id="tools-radio" type="radio" name="nav" value="tools"checked>
-            <label for="tools" onclick="navTo('tools-header')">TOOL</label>
+            <label for="tools" onclick="navTo('tools-header')">TOOLS</label>
             <input id="boosters-radio" type="radio" name="nav" value="boosters">
-            <label for="boosters" onclick="navTo('boosters-header')">BOOST</label>
+            <label for="boosters" onclick="navTo('boosters-header')">BOOSTERS</label>
             <input id="flowers-radio" type="radio" name="nav" value="flowers">
-            <label for="flowers" onclick="navTo('flowers-header')">FLOWER</label>
+            <label for="flowers" onclick="navTo('flowers-header')">FLOWERS</label>
             <input id="buildings-radio" type="radio" name="nav" value="buildings">
-            <label for="buildings" onclick="navTo('buildings-header')">BUILD</label>
-            <input id="awards-radio" type="radio" name="nav" value="awards">
-            <label for="awards" onclick="navTo('awards-header')">AWARD</label>
+            <label for="buildings" onclick="navTo('buildings-header')">BUILDINGS</label>
         </div>
         <div id="tools-header" class="shop-header">TOOLS</div>
         <div class="shop-item">
-            <img src="./images/items/spade.png">
+            <img src="./images/items/spade.gif">
             <div class="item-title">Ultimate Spade</div>
-            <div class="item-desc">germprob +10%<br>deathprob -20%</div>
-            <div class="item-price">10.5</div>
+            <div class="item-desc">germprob +10%<br>prob -20%</div>
+            <button class="buy-btn"><div>45</div></button>
         </div>
 
-        <!--<?php
+        <?php
+            $shopHeaders = array("tools", "boosters", "flowers", "builds");
+            for ($i = 0; $i < 4; $i++) {
+                echo('<div id="'.$shopHeaders[$i].'-header" class="shop-header">'.strtoupper($shopHeaders[$i]).'</div>');
+                foreach ($shopArrs[$i] as $item) {
+                    echo('<div class="shop-item '.$shopHeaders[$i].'-item">');
+                        echo('<img class="shop-img item-img" id="shop-'.$item["name"].'" src="./images/items/'.$item["name"].'.gif">');
+                        if ($shopHeaders[$i] == "flowers") {
+                            echo('<img class="seed-img item-img" src="./images/items/seed.gif">');
+                        }
+                        echo('<div class="item-title">'.$item["name"].'</div>');
+                        echo('<div class="item-desc">'.$item["description"].'</div>');
+                        switch ($shopHeaders[$i]) {
+                            case "flowers":
+                                echo('<button class="buy-btn buy-flower-btn"><div>'.$item["cost"].'</div></button>');
+                                echo('<button class="buy-btn buy-seed-btn"><div>'.$item["cost"].'</div></button>');
+                                break;
+                            case "tools":
+                                echo('<button class="use-btn">USE</button>');
+                                break;
+                            default:
+                                echo('<button class="buy-btn"><div>'.$item["cost"].'</div></button>');
+                                break;
+                        }
+                        
+                    echo('</div>');
+                }
+            }
             
-        ?>-->
-    
-        <div id="boosters-header" class="shop-header">BOOSTERS</div>
-        <div class="shop-item">
-            <img src="./images/items/spade.png">
-        </div>
-        
-        <div id="flowers-header" class="shop-header">FLOWERS</div>
-        
-        <div id="buildings-header" class="shop-header">BUILDINGS</div>
-        
-        <div id="awards-header" class="shop-header">AWARDS</div>
+        ?>
         
     </div>
 
@@ -210,8 +225,8 @@
         <div id="tile-info-bottom"></div>
     </div>
     <div id="images" style="display:none;">
-        <img src="images/grass.png" id="backdrop-season-0">;
-        <img src="images/grass.png" id="backdrop-season-1">;
+        <img src="images/grass.gif" id="backdrop-season-0">;
+        <img src="images/grass.gif" id="backdrop-season-1">;
     </div>
 </body>
 </html>

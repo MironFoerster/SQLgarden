@@ -91,8 +91,8 @@ body {
     background-color: rgb(77, 57, 50);
     border: 4px solid rgb(58, 42, 36);
     display: grid;
-    grid-template-columns: 76px, auto, 80px;
-    grid-template-columns: 20px, auto;
+    grid-template-columns: 76px auto 80px;
+    grid-template-rows: 20px auto;
     align-items: center;
     margin: 5px 10px;
 }
@@ -154,7 +154,7 @@ body {
     grid-row: 1;
     background-color: rgb(84, 61, 52);
     padding-top: 22px;
-    padding-bottom: 43%;
+    padding-bottom: 100px;
 
     overflow-y: scroll;
     position: relative;
@@ -184,8 +184,8 @@ body {
     background-color: rgb(77, 57, 50);
     border: 4px solid rgb(58, 42, 36);
     display: grid;
-    grid-template-columns: 76px, auto, 80px;
-    grid-template-columns: 20px, auto;
+    grid-template-columns: 76px auto 80px;
+    grid-template-rows: 20px auto;
     align-items: center;
     margin: 0 0 15px 0;
 }
@@ -210,17 +210,43 @@ body {
     grid-row: 2;
     font-size: 11px;
 }
-.shop-item .item-price {
+.buy-btn {
     grid-column: 3;
     grid-row: 1/3;
-    font-size: 40px;
+    height: 1.5em;
+    justify-self: stretch;
+    align-self: center;
+    overflow: hidden;
+    background-color: gray;
     font-weight: bold;
-    color:rgba(118, 118, 118, 0.635);
+    border-radius: 10px;
+    color:rgba(18, 18, 18, 0.635);
+    pointer-events: none;
+    transition: all 0.3s;
+    position: relative;
 }
-.shop-item::after {
-    grid-column: 3;
-    grid-row: 1/3;
-    content: ":coin";
+.buy-btn.affordable {
+    background-color: greenyellow;
+    pointer-events: all;
+}
+.buy-btn div {
+    transition: inherit;
+    transform: translateY(0%);
+    position:absolute;
+    top: 0em;
+}
+.buy-btn::before {
+    transition: inherit;
+    transform: translateY(0%);
+    position:absolute;
+    top: -1.1em;
+    content: "use";
+}
+.buy-btn:hover div {
+    transform: translateY(100%);
+}
+.buy-btn:hover::before {
+    transform: translateY(100%);
 }
 /*
 .shop-rect {
@@ -512,25 +538,33 @@ input[type="radio"]:checked + label {
 }
 
 #awards {
-    position: relative;
     top: 50%;
     left: 50%;
     transform: translate(-20px, -20px);
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: space-between;
     height: 300px;
     width: 200px;
     border-radius: 20px;
     background-color: #6f5244;
+
+    overflow-y: scroll;
+    position: relative;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    align-items: center;
 }
 
+#awards::-webkit-scrollbar {
+    display: none;
+}
 #awards-title {
     position: absolute;
-    top: 10px;
-    left: 10px;
+    top: 8px;
+    left: 9px;
 }
 #awards-title::first-letter {
     margin-right: 40px;
