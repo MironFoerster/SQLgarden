@@ -42,14 +42,11 @@ const buildItemsHoverTiles = () => {
     for (let sect of ["boosters", "flowers"]) {
         for (let item of STATIC_DATA[sect]) {
             sess.items_hover_tiles[item.name] = [];
-                for (let tile of game_data.tiles) {
-                    if (tile.boosters.includes(item.name) || tile.flower == item.name) {
-                        sess.items_hover_tiles[item.name].push([tile.locx, tile.locy]);
-                    }
-                    
+            for (let tile of game_data.tiles) {
+                if (tile.boosters.includes(item.name) || tile.flower == item.name) {
+                    sess.items_hover_tiles[item.name].push([tile.locx, tile.locy]);
                 }
             }
-            
         }
     }
 }
@@ -304,11 +301,13 @@ const handleMouseClick = (evt) => {
 
 const handleMouseMove = (evt) => {
     if (sess.dragging){
+        // handle drag
         sess.transform_x += evt.offsetX - prevPoint.x;
         sess.transform_y += evt.offsetY - prevPoint.y;
         prevPoint={x: evt.offsetX, y: evt.offsetY};
         updateTransform();
     } else {
+        // handle hover effects
         let cursor_on_cvs = {x: evt.offsetX/sess.transform_scale-sess.transform_x,
                        y: evt.offsetY/sess.transform_scale-sess.transform_y};
 
@@ -322,27 +321,42 @@ const handleMouseMove = (evt) => {
         // Math.pow(next_on_cvs.x-cursor_on_cvs.x, 2) + Math.pow(next_on_cvs.y-cursor_on_cvs.y, 2) <= Math.pow(sess.tile_size/2, 2)
         // if hovering a tile
         sess.hovered_tile = game_data.tiles.find(t => t.locx == next_on_tg.x && t.locy == next_on_tg.y);
-        let hovering = false;
+        let hover_type = undefined;
         if (sess.hovered_tile) {
-            // set hover based on current action
+            // set hover effect based on current action
             // tools + flowers
-            if (sess.current_action.includes("tool") || sess.current_action.includes("flower") || sess.current_action.includes("shelf")) {
-                let 
-                if (!sess.items_hover_tiles[sess.current_action].find(t => t.locx == next_on_tg.x && t.locy == next_on_tg.y  &&
-                    !sess.tiles.find)) {
-                    sess.running_animations.push({starttime: undefined, type: "tile-hover", x: next_on_cvs.x, y: next_on_cvs.y, color: "white"});
-                } 
-            } else if (sess.current_action.includes("booster")) {
+            if (!sess.items_hover_tiles[sess.current_action].find(loc => loc.x == next_on_tg.x && loc.y == next_on_tg.y)) {
+                if (sess.current_action.includes("flower") || sess.current_action.includes("shelf")) {
+                    if (!sess.tiles.find(t => t.locx == next_on_tg.x && t.locy == next_on_tg.y).flower) {
+                        hover_type = "tile-hover";
+                    } 
+                } else if (sess.current_action.includes("booster")) {
+                    hover_type = "tile-hover";
+                } else if (sess.current_action.includes("building")) {
+                    hover_type = "tile-hover building-hover";
+                } else if (sess.current_action.includes("sickle")) {
+                    hover_type = "tile-hover";
+                } else if (sess.current_action.includes("seedcoll")) {
+                    hover_type = "tile-hover";
+                }
 
-            } else if (sess.current_action.includes("building")) {
-                
+            } else if (sess.current_action.includes("spade")) {
+                // hovering the diggable tiles
+                hover_type = "tile-hover";
             }
-        }
-        if (!hovering) {
+
+            
             // remove any hovering animations
-            let i = sess.running_animations.findIndex(a => a.type === "tile-hover");
-            if (i>-1) {sess.running_animations.splice(i, 1)}
-            sess.hovered_tile = undefined;
+            if (sess.running_animations.findIndex(a => a.type.includes("tile-hover"))>-1) {
+                if (!hover_type) {
+                    sess.running_animations.splice(i, 1);
+                    sess.hovered_tile = undefined;
+                }                
+            } else {
+                if (hover_type) {
+                    sess.running_animations.push({starttime: undefined, type: hover_type, x: next_on_cvs.x, y: next_on_cvs.y, color: "white"});
+                } 
+            }
         }
     }
 }
