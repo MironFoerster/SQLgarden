@@ -221,6 +221,7 @@
         <div class="skip-btn winter-skip winter-skip-right-left" onclick="skipToSeason(event)"></div>
     </div>
     <div id="tile-info" class="popup">
+        <div class="shader" onclick="event.stopPropagation();event.currentTarget.parentElement.classList.remove('opened');"></div>
 
         <div id="tile-info-bottom"></div>
     </div>

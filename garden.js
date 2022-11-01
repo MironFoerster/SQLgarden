@@ -291,6 +291,11 @@ const handleMouseClick = (evt) => {
         // handle clicks on tiles regarding current action
         switch (sess.current_action) {
             case "lens":
+                // fill popup with data
+                document.getElementById("tile-info").classList.add("opened")
+
+                // open popup
+
                 break;
             case "spade":
                 break;
