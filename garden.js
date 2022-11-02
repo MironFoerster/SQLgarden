@@ -9,13 +9,13 @@ let sess = {
     transform_y: 0,
     transform_scale: 1,
 
-    items_hover_tiles: {},
+    items_highlight_tiles: {},
     cvs_images: [],
     running_animations: [], //{starttime: undefined, type: undefined, x: undefined, y: undefined, color: undefined}
 
 
     dragging: false,
-    current_action: undefined,
+    current_action: "lens",
     hovered_tile: undefined,
     current_season: 1,
 
@@ -26,25 +26,26 @@ let sess = {
 
 const buildItemsHoverTiles = () => {
     // create array for every shop item, populate if possible
-    sess.items_hover_tiles["spade"] = [];
-    sess.items_hover_tiles["sickle"] = [];
-    sess.items_hover_tiles["seedcollector"] = game_data.seeds_collected || [];
+    sess.items_highlight_tiles["lens"] = [];
+    sess.items_highlight_tiles["spade"] = [];
+    sess.items_highlight_tiles["sickle"] = [];
+    sess.items_highlight_tiles["seedcollector"] = game_data.seeds_collected || [];
 
     for (let building of STATIC_DATA.buildings) {
-        sess.items_hover_tiles[building.name] = [];
+        sess.items_highlight_tiles[building.name] = [];
         for (let built of game_data.builts) {
             if (built.name == building.name) {
-                sess.items_hover_tiles[building.name].push([built.locx, built.locy]);
+                sess.items_highlight_tiles[building.name].push([built.locx, built.locy]);
             }
         }
     }
 
     for (let sect of ["boosters", "flowers"]) {
         for (let item of STATIC_DATA[sect]) {
-            sess.items_hover_tiles[item.name] = [];
+            sess.items_highlight_tiles[item.name] = [];
             for (let tile of game_data.tiles) {
                 if (tile.boosters.includes(item.name) || tile.flower == item.name) {
-                    sess.items_hover_tiles[item.name].push([tile.locx, tile.locy]);
+                    sess.items_highlight_tiles[item.name].push([tile.locx, tile.locy]);
                 }
             }
         }
@@ -88,10 +89,8 @@ const alterRadios = () => {
         document.getElementById("boosters-radio").checked = true;
     } else if (top < document.getElementById("buildings-header").offsetTop) {
         document.getElementById("flowers-radio").checked = true;
-    } else if (top < document.getElementById("awards-header").offsetTop) {
-        document.getElementById("buildings-radio").checked = true;
     } else {
-        document.getElementById("awards-radio").checked = true;
+        document.getElementById("buildings-radio").checked = true;
     }
 }
 
@@ -177,7 +176,24 @@ const animationLoop = (timestamp) => {
     // draw all current animations
     ctx = ctx_list[2] // animations context
     ctx.clearRect(...sess.frame_rect);
-
+    
+    for (let a of sess.running_animations) {
+        ctx.beginPath();
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        switch (a.type) {
+            case "item-highlight":
+                ctx.arc(a.x * sess.horz_tile_dist + (a.y%2)*(sess.horz_tile_dist/2), a.y * sess.vert_tile_dist, sess.tile_size/2, 0, 2 * Math.PI);
+                break;
+            case "tile-hover":
+                ctx.arc(a.x * sess.horz_tile_dist + (a.y%2)*(sess.horz_tile_dist/2), a.y * sess.vert_tile_dist, sess.tile_size/2, 0, 2 * Math.PI);
+                break;
+            case "building-hover":
+                ctx.arc(a.x * sess.horz_tile_dist + (a.y%2)*(sess.horz_tile_dist/2), a.y * sess.vert_tile_dist, sess.tile_size/2*3, 0, 2 * Math.PI);
+                break;
+        }
+        ctx.fill();
+    }
+    
 
     window.requestAnimationFrame(animationLoop);
 }
@@ -281,7 +297,7 @@ const updateMoney = (amount) => {
     let items = document.getElementsByClassName("buy-btn")
 
     for (let i of items) {
-        i.classList.toggle("affordable", (parseFloat(i.querySelector("div").innerHTML)<game_data.money&&!i.classList.contains("affordable"))||
+        i.classList.toggle("affordable", (parseFloat(i.querySelector("div").innerHTML)<=game_data.money&&!i.classList.contains("affordable"))||
                                          (parseFloat(i.querySelector("div").innerHTML)>game_data.money&&i.classList.contains("affordable")))
     }
 }
@@ -330,7 +346,7 @@ const handleMouseMove = (evt) => {
         if (sess.hovered_tile) {
             // set hover effect based on current action
             // tools + flowers
-            if (!sess.items_hover_tiles[sess.current_action].find(loc => loc.x == next_on_tg.x && loc.y == next_on_tg.y)) {
+            if (!sess.items_highlight_tiles[sess.current_action].find(loc => loc.x == next_on_tg.x && loc.y == next_on_tg.y)) {
                 if (sess.current_action.includes("flower") || sess.current_action.includes("shelf")) {
                     if (!sess.tiles.find(t => t.locx == next_on_tg.x && t.locy == next_on_tg.y).flower) {
                         hover_type = "tile-hover";
@@ -338,7 +354,7 @@ const handleMouseMove = (evt) => {
                 } else if (sess.current_action.includes("booster")) {
                     hover_type = "tile-hover";
                 } else if (sess.current_action.includes("building")) {
-                    hover_type = "tile-hover building-hover";
+                    hover_type = "building-hover";
                 } else if (sess.current_action.includes("sickle")) {
                     hover_type = "tile-hover";
                 } else if (sess.current_action.includes("seedcoll")) {
@@ -363,6 +379,17 @@ const handleMouseMove = (evt) => {
                 } 
             }
         }
+    }
+}
+
+const toggleItemHighlights = (item_name) => {
+    if (item_name) {
+        for (let loc of sess.items_highlight_tiles[item_name]) {
+            sess.running_animations.push({starttime: undefined, type: "item-highlight", x: loc[0], y: loc[1], color: "white"})
+        }
+    } else {
+        // remove all highlight animations
+        sess.running_animations = sess.running_animations.filter(a=>!a.type.includes("item-highlight"));
     }
 }
 
@@ -424,6 +451,7 @@ window.onload = () => {
             changeCurrentActionTo("inspect");
         }
     }
+    buildItemsHoverTiles();
     gatherCvsImages();
 
     setCanvasSize();

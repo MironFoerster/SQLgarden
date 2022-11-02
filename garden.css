@@ -210,10 +210,10 @@ body {
     grid-row: 2;
     font-size: 11px;
 }
-.buy-btn {
+.buy-btn, .use-btn {
     grid-column: 3;
     grid-row: 1/3;
-    height: 1.5em;
+    height: 30px;
     justify-self: stretch;
     align-self: center;
     overflow: hidden;
@@ -225,7 +225,7 @@ body {
     transition: all 0.3s;
     position: relative;
 }
-.buy-btn.affordable {
+.buy-btn.affordable, .use-btn {
     background-color: greenyellow;
     pointer-events: all;
 }
@@ -240,7 +240,7 @@ body {
     transform: translateY(0%);
     position:absolute;
     top: -1.1em;
-    content: "use";
+    content: "USE";
 }
 .buy-btn:hover div {
     transform: translateY(100%);

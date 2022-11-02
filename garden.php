@@ -179,31 +179,33 @@
         </div>
 
         <?php
-            $shopHeaders = array("tools", "boosters", "flowers", "builds");
+            $shopHeaders = array("tools", "boosters", "flowers", "buildings");
             for ($i = 0; $i < 4; $i++) {
                 echo('<div id="'.$shopHeaders[$i].'-header" class="shop-header">'.strtoupper($shopHeaders[$i]).'</div>');
                 foreach ($shopArrs[$i] as $item) {
-                    echo('<div class="shop-item '.$shopHeaders[$i].'-item">');
-                        echo('<img class="shop-img item-img" id="shop-'.$item["name"].'" src="./images/items/'.$item["name"].'.gif">');
-                        if ($shopHeaders[$i] == "flowers") {
-                            echo('<img class="seed-img item-img" src="./images/items/seed.gif">');
-                        }
-                        echo('<div class="item-title">'.$item["name"].'</div>');
-                        echo('<div class="item-desc">'.$item["description"].'</div>');
-                        switch ($shopHeaders[$i]) {
-                            case "flowers":
-                                echo('<button class="buy-btn buy-flower-btn"><div>'.$item["cost"].'</div></button>');
-                                echo('<button class="buy-btn buy-seed-btn"><div>'.$item["cost"].'</div></button>');
-                                break;
-                            case "tools":
-                                echo('<button class="use-btn">USE</button>');
-                                break;
-                            default:
-                                echo('<button class="buy-btn"><div>'.$item["cost"].'</div></button>');
-                                break;
-                        }
-                        
-                    echo('</div>');
+                    if (strpos($item["name"], "-builtboost") == false) {
+                        echo("<div class='shop-item $shopHeaders[$i]-item' onmouseover='toggleItemHighlights(\"".$item['name']."\")' onmouseout='toggleItemHighlights()'>");
+                            echo('<img class="shop-img item-img" id="shop-'.$item["name"].'" src="./images/items/'.$item["name"].'.gif">');
+                            if ($shopHeaders[$i] == "flowers") {
+                                echo('<img class="seed-img item-img" src="./images/items/seed.gif">');
+                            }
+                            echo('<div class="item-title">'.$item["name"].'</div>');
+                            echo('<div class="item-desc">'.$item["description"].'</div>');
+                            switch ($shopHeaders[$i]) {
+                                case "flowers":
+                                    echo('<button class="buy-btn buy-flower-btn"><div>'.$item["cost"].'</div></button>');
+                                    echo('<button class="buy-btn buy-seed-btn"><div>'.$item["cost"].'</div></button>');
+                                    break;
+                                case "tools":
+                                    echo('<button class="use-btn">USE</button>');
+                                    break;
+                                default:
+                                    echo('<button class="buy-btn"><div>'.$item["cost"].'</div></button>');
+                                    break;
+                            }
+                            
+                        echo('</div>');
+                    }
                 }
             }
             
