@@ -24,30 +24,19 @@ let sess = {
     tile_size: 30,  // not bigger than vert_tile_dist
 }
 
-const buildItemsHoverTiles = () => {
+const buildItemsHighlightTiles = () => {
     // create array for every shop item, populate if possible
     sess.items_highlight_tiles["lens"] = [];
-    sess.items_highlight_tiles["spade"] = [];
+    sess.items_highlight_tiles["spade"] = []; // TODO
     sess.items_highlight_tiles["sickle"] = [];
     sess.items_highlight_tiles["seedcollector"] = game_data.seeds_collected || [];
 
     for (let building of STATIC_DATA.buildings) {
-        sess.items_highlight_tiles[building.name] = [];
-        for (let built of game_data.builts) {
-            if (built.name == building.name) {
-                sess.items_highlight_tiles[building.name].push([built.locx, built.locy]);
-            }
-        }
+        sess.items_highlight_tiles[building.name] = game_data.builts.filter((b,i,a)=>b.name == building.name).map(b=>tgToCvs([b.locx, b.locy]));
     }
-
     for (let sect of ["boosters", "flowers"]) {
         for (let item of STATIC_DATA[sect]) {
-            sess.items_highlight_tiles[item.name] = [];
-            for (let tile of game_data.tiles) {
-                if (tile.boosters.includes(item.name) || tile.flower == item.name) {
-                    sess.items_highlight_tiles[item.name].push([tile.locx, tile.locy]);
-                }
-            }
+            sess.items_highlight_tiles[item.name] = game_data.tiles.filter((t,i,a)=>t.boosters.includes(item.name) || t.flower == item.name).map(t=>tgToCvs([t.locx, t.locy]));
         }
     }
 }
@@ -57,10 +46,6 @@ const gatherCvsImages = () => {
         sess.cvs_images[flower.name] = document.getElementById("shelf-"+flower.name+"-img");
     }
 }
-
-
-let transform_data;
-
 
 const setCanvasSize = () => {
     const cont_style = window.getComputedStyle(canvas_cont);
@@ -163,7 +148,7 @@ const drawScene = (tiles=undefined) => {
         ctx.clearRect(...sess.frame_rect);
     }
     for (let tile of tiles || game_data.tiles) {
-        topleft = [-sess.tile_size/2 + tile.locx * sess.horz_tile_dist + (tile.locy%2)*(sess.horz_tile_dist/2), -sess.tile_size/2 + tile.locy * sess.vert_tile_dist];
+        topleft = [-sess.tile_size/2 + tile.locx * sess.horz_tile_dist + tile.locy*(sess.horz_tile_dist/2), -sess.tile_size/2 + tile.locy * sess.vert_tile_dist];
         if (tiles) {
             ctx.clearRect(...topleft, ...topleft.map(v=>v+tile_size));
         }
@@ -182,13 +167,13 @@ const animationLoop = (timestamp) => {
         ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
         switch (a.type) {
             case "item-highlight":
-                ctx.arc(a.x * sess.horz_tile_dist + (a.y%2)*(sess.horz_tile_dist/2), a.y * sess.vert_tile_dist, sess.tile_size/2, 0, 2 * Math.PI);
+                ctx.arc(a.x, a.y, sess.tile_size/2, 0, 2 * Math.PI);
                 break;
             case "tile-hover":
-                ctx.arc(a.x * sess.horz_tile_dist + (a.y%2)*(sess.horz_tile_dist/2), a.y * sess.vert_tile_dist, sess.tile_size/2, 0, 2 * Math.PI);
+                ctx.arc(a.x, a.y, sess.tile_size/2, 0, 2 * Math.PI);
                 break;
             case "building-hover":
-                ctx.arc(a.x * sess.horz_tile_dist + (a.y%2)*(sess.horz_tile_dist/2), a.y * sess.vert_tile_dist, sess.tile_size/2*3, 0, 2 * Math.PI);
+                ctx.arc(a.x, a.y, sess.tile_size/2*3, 0, 2 * Math.PI);
                 break;
         }
         ctx.fill();
@@ -323,63 +308,77 @@ const handleMouseClick = (evt) => {
 const handleMouseMove = (evt) => {
     if (sess.dragging){
         // handle drag
-        sess.transform_x += evt.offsetX - prevPoint.x;
-        sess.transform_y += evt.offsetY - prevPoint.y;
-        prevPoint={x: evt.offsetX, y: evt.offsetY};
+        sess.transform_x += evt.offsetX - prevPoint[0];
+        sess.transform_y += evt.offsetY - prevPoint[1];
+        prevPoint=[evt.offsetX, evt.offsetY];
         updateTransform();
     } else {
         // handle hover effects
-        let cursor_on_cvs = {x: evt.offsetX/sess.transform_scale-sess.transform_x,
-                       y: evt.offsetY/sess.transform_scale-sess.transform_y};
+        let cursor_on_cvs = [evt.offsetX/sess.transform_scale-sess.transform_x,
+                            evt.offsetY/sess.transform_scale-sess.transform_y];
 
-        let next_on_tg = {}; // tg = tile-grid
+        let next_on_tg = []; // tg = tile-grid
 
-        next_on_tg.y = Math.round(cursor_on_cvs.y/sess.vert_tile_dist);
-        next_on_tg.x = Math.round(cursor_on_cvs.x/sess.horz_tile_dist - (next_on_tg.y%2)*(sess.horz_tile_dist/2));
-        
-        let next_on_cvs = {x: next_on_tg.x*sess.horz_tile_dist + (next_on_tg.y%2)*(sess.horz_tile_dist/2),
-                           y: next_on_tg.y*sess.vert_tile_dist};
-        // Math.pow(next_on_cvs.x-cursor_on_cvs.x, 2) + Math.pow(next_on_cvs.y-cursor_on_cvs.y, 2) <= Math.pow(sess.tile_size/2, 2)
+        next_on_tg[1] = Math.round(cursor_on_cvs[1]/sess.vert_tile_dist);
+        next_on_tg[0] = Math.round(cursor_on_cvs[0]/sess.horz_tile_dist - next_on_tg[1]/2);
+
+        let next_on_cvs = tgToCvs(next_on_tg);
+        // Math.pow(next_on_cvs[0]-cursor_on_cvs[0], 2) + Math.pow(next_on_cvs[1]-cursor_on_cvs[1], 2) <= Math.pow(sess.tile_size/2, 2)
         // if hovering a tile
-        sess.hovered_tile = game_data.tiles.find(t => t.locx == next_on_tg.x && t.locy == next_on_tg.y);
+        sess.hovered_tile = game_data.tiles.find(t => t.locx == next_on_tg[0] && t.locy == next_on_tg[1]);
         let hover_type = undefined;
         if (sess.hovered_tile) {
             // set hover effect based on current action
-            // tools + flowers
-            if (!sess.items_highlight_tiles[sess.current_action].find(loc => loc.x == next_on_tg.x && loc.y == next_on_tg.y)) {
-                if (sess.current_action.includes("flower") || sess.current_action.includes("shelf")) {
-                    if (!sess.tiles.find(t => t.locx == next_on_tg.x && t.locy == next_on_tg.y).flower) {
-                        hover_type = "tile-hover";
-                    } 
-                } else if (sess.current_action.includes("booster")) {
-                    hover_type = "tile-hover";
-                } else if (sess.current_action.includes("building")) {
-                    hover_type = "building-hover";
-                } else if (sess.current_action.includes("sickle")) {
-                    hover_type = "tile-hover";
-                } else if (sess.current_action.includes("seedcoll")) {
+            if (sess.current_action.includes("lens")) {
+                hover_type = "tile-hover";
+                console.log("hov");
+            } else if (sess.current_action.includes("flower")) {
+                if (!sess.hovered_tile.flower) {
                     hover_type = "tile-hover";
                 }
-
+            } else if (sess.current_action.includes("shelf")) {
+                if (!sess.hovered_tile.flower) {
+                    hover_type = "tile-hover";
+                }
+            } else if (sess.current_action.includes("booster")) {
+                if (!sess.hovered_tile.boosters.includes(sess.current_action.replace("booster-", ""))) {
+                    hover_type = "tile-hover";
+                }
+            } else if (sess.current_action.includes("building")) {
+                if (!sess.hovered_tile.boosters.includes(sess.current_action.replace("building-", ""))) {
+                    if (!game_data.tiles.filter(t=>[[1,0],[0,1],[-1,1],[-1,0],[0,-1],[1,-1]].some(loc=> t.locx == next_on_tg[0]+loc[0] && t.locy == next_on_tg[1]+loc[1]).some(t=>t.boosters.includes(sess.current_action.replace("building-", ""))))) {
+                        hover_type = "building-hover";
+                    }
+                }
+            } else if (sess.current_action.includes("sickle")) {
+                if (sess.hovered_tile.flower) {
+                    hover_type = "tile-hover";
+                }
+            } else if (sess.current_action.includes("seedcoll")) {
+                if (sess.hovered_tile.seeding) {
+                    hover_type = "tile-hover";
+                }
             } else if (sess.current_action.includes("spade")) {
                 // hovering the diggable tiles
-                hover_type = "tile-hover";
+                if (sess.items_highlight_tiles["spade"].find(loc => loc[0] == next_on_tg[0] && loc[1] == next_on_tg[1])) {
+                    hover_type = "tile-hover";
+                }
             }
+        }    
+        // remove any hovering animations NONONONONONONONON
+        let i = sess.running_animations.findIndex(a => a.type.includes("tile-hover"));
+        if (i>-1) {sess.running_animations.splice(i, 1);}
 
-            
-            // remove any hovering animations
-            if (sess.running_animations.findIndex(a => a.type.includes("tile-hover"))>-1) {
-                if (!hover_type) {
-                    sess.running_animations.splice(i, 1);
-                    sess.hovered_tile = undefined;
-                }                
-            } else {
-                if (hover_type) {
-                    sess.running_animations.push({starttime: undefined, type: hover_type, x: next_on_cvs.x, y: next_on_cvs.y, color: "white"});
-                } 
-            }
-        }
+        if (!hover_type) {
+            sess.hovered_tile = undefined;
+        } else {
+            sess.running_animations.push({starttime: undefined, type: hover_type, x: next_on_cvs[0], y: next_on_cvs[1], color: "white"});
+        } 
     }
+}
+
+const tgToCvs = (tg) => {
+    return [tg[0]*sess.horz_tile_dist + tg[1]*(sess.horz_tile_dist/2), tg[1]*sess.vert_tile_dist]
 }
 
 const toggleItemHighlights = (item_name) => {
@@ -394,17 +393,18 @@ const toggleItemHighlights = (item_name) => {
 }
 
 const changeCurrentActionTo = (to) => {
-    // to be "shelf-something" or "flower-something" or "booster-something"
-    if (!sess.current_action == "inspect") {
+    // to can be "shelf-something" or "flower-something" or "booster-something"
+    if (!sess.current_action == "lens") {
         for (let el of document.getElementsByClassName("active-item")) {
+            // only one
             el.classList.remove("active-item");
         }
     }
 
-    sess.current_action == to;
+    sess.current_action = to;
     ui_cvs.style = "--cursorloc: url(images/cursors/"+to+".png);"
 
-    if (!to == "inspect") {
+    if (!to == "lens") {
         for (let el of document.getElementsById(to+"-item")) {
             el.classList.add("active-item");
         }
@@ -431,7 +431,7 @@ window.onload = () => {
     sess.transform_y =  parseInt(window.getComputedStyle(canvas_cont).height)/2;
     sess.transform_scale =  1;
 
-    ui_cvs.onmousedown = (evt) => {sess.dragging=true; prevPoint={x: evt.offsetX, y: evt.offsetY}};
+    ui_cvs.onmousedown = (evt) => {sess.dragging=true; prevPoint=[evt.offsetX, evt.offsetY]};
     ui_cvs.onmousemove = handleMouseMove;
     ui_cvs.onmouseup = () => {sess.dragging = false;};
 
@@ -447,11 +447,11 @@ window.onload = () => {
     };
     document.body.onkeyup = (evt) => {
         if (evt.key === "Escape") {
-            // change current action to inspect
-            changeCurrentActionTo("inspect");
+            // change current action to lens
+            changeCurrentActionTo("lens");
         }
     }
-    buildItemsHoverTiles();
+    buildItemsHighlightTiles();
     gatherCvsImages();
 
     setCanvasSize();

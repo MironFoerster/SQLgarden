@@ -136,7 +136,7 @@
                     echo('<img class="seed-img item-img" src="./images/items/seed.gif">');
                     echo('<div class="item-title">'.$item["name"].'</div>');
                     echo('<div class="item-desc">'.$item["description"].'</div>');
-                    echo('<div class="amount-btn">'.$item["cost"].'</div>');
+                    echo('<div class="amount-btn" onclick="changeCurrentActionTo(\"shelf-'.$item["name"].'\")">'.$item["cost"].'</div>');
                 echo('</div>');
             }
             ?>
@@ -193,14 +193,14 @@
                             echo('<div class="item-desc">'.$item["description"].'</div>');
                             switch ($shopHeaders[$i]) {
                                 case "flowers":
-                                    echo('<button class="buy-btn buy-flower-btn"><div>'.$item["cost"].'</div></button>');
-                                    echo('<button class="buy-btn buy-seed-btn"><div>'.$item["cost"].'</div></button>');
+                                    echo("<button class='buy-btn buy-flower-btn' onclick='changeCurrentActionTo(\"flower-".$item["name"]."\")'><div>".$item["cost"]."</div></button>");
+                                    echo("<button class='buy-btn buy-seed-btn' onclick='changeCurrentActionTo(\"seed-".$item["name"]."\")'><div>".$item["cost"]."</div></button>");
                                     break;
                                 case "tools":
-                                    echo('<button class="use-btn">USE</button>');
+                                    echo("<button class='use-btn' onclick='changeCurrentActionTo(\"".$item["name"]."\")'>USE</button>");
                                     break;
                                 default:
-                                    echo('<button class="buy-btn"><div>'.$item["cost"].'</div></button>');
+                                    echo("<button class='buy-btn' onclick='changeCurrentActionTo(\"".$item["name"]."\")'><div>".$item["cost"]."</div></button>");
                                     break;
                             }
                             
