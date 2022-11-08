@@ -19,6 +19,10 @@ body {
     overflow: hidden;
 }
 
+.hidden {
+    display: none !important;
+}
+
 .cursor {
     pointer-events: none;
     display: none;
@@ -66,7 +70,19 @@ body {
     height: 0;
     width: 100%;
     transition: height 0.4s;
-    
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}
+#shelf::before {
+    content: "Shelf is empty";
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
 }
 
 #shelf::-webkit-scrollbar {
@@ -95,6 +111,7 @@ body {
     grid-template-rows: 20px auto;
     align-items: center;
     margin: 5px 10px;
+    z-index: 4;
 }
 
 #top-bar::after {
