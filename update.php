@@ -1,5 +1,6 @@
 <?php
-
+header('Content-Type: application/json; charset=utf-8');
+echo '["geeks", "for", "geeks"]';
 $server_name='localhost';
 $username='root';
 $password='';
@@ -9,7 +10,8 @@ $conn=mysqli_connect($server_name,$username,$password,$database_name);
 if (!$conn) {
    die('Connection failed');
 }
-foreach ($_REQUEST['data'] as $row) {
+print_r(json_decode($_REQUEST['data'], true)[0]["a"]);
+foreach (json_decode($_REQUEST['data']) as $row) {
   switch ($_REQUEST["table_name"]) {
     case "awards":
       break;
@@ -37,5 +39,4 @@ foreach ($_REQUEST['data'] as $row) {
   $result=mysqli_query($conn, $sql);
 }
 
-echo '["updated"]';
 ?>

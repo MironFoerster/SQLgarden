@@ -85,7 +85,7 @@ const skipToSeason = (evt) => {
 
 
 const updateDatabase = (table_name, data=[], drop=false) => {
-    fetch('/localhost/sqlgarden/update.php', {
+    fetch('/localhost/sqlgarden/test.php', {
         method: 'POST',
         headers: {ContentType: 'application/json'},
         body: JSON.stringify({
@@ -293,7 +293,7 @@ const handleMouseClick = (evt) => {
         switch (sess.current_action) {
             case "lens":
                 // fill popup with data
-                document.getElementById("tile-info").classList.add("opened")
+                document.getElementById("tile-info").parentElement.classList.add("opened")
 
                 // open popup
 
@@ -314,8 +314,8 @@ const handleMouseMove = (evt) => {
         updateTransform();
     } else {
         // handle hover effects
-        let cursor_on_cvs = [evt.offsetX/sess.transform_scale-sess.transform_x,
-                            evt.offsetY/sess.transform_scale-sess.transform_y];
+        let cursor_on_cvs = [(evt.offsetX-sess.transform_x)/sess.transform_scale,
+                            (evt.offsetY-sess.transform_y)/sess.transform_scale];
 
         let next_on_tg = []; // tg = tile-grid
 
@@ -433,6 +433,7 @@ window.onload = () => {
 
     ui_cvs.onmousedown = (evt) => {sess.dragging=true; prevPoint=[evt.offsetX, evt.offsetY]};
     ui_cvs.onmousemove = handleMouseMove;
+    ui_cvs.onclick = handleMouseClick;
     ui_cvs.onmouseup = () => {sess.dragging = false;};
 
     ui_cvs.onwheel = (evt) => {

@@ -2,10 +2,14 @@
 <html>
 <head>
 	<meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<title>SQLgarden</title>
     <link rel="stylesheet" href="./garden.css">
     <script>
         <?php
+            if ($_REQUEST["entermode"] == "new") {
+                // create new game
+            }
             $server_name='localhost';
             $username='root';
             $password='';
@@ -131,7 +135,7 @@
         <div id="shelf">
             <?php
             foreach ($flowersArr as $item) {
-                echo('<div class="shelf-item">');
+                echo('<div class="shelf-item hidden" id="shelf-'.$item["name"].'">');
                     echo('<img class="shelf-flower-img item-img" id="shelf-'.$item["name"].'-img" src="./images/items/'.$item["name"].'.gif">');
                     echo('<img class="seed-img item-img" src="./images/items/seed.gif">');
                     echo('<div class="item-title">'.$item["name"].'</div>');
@@ -222,9 +226,8 @@
         <div class="skip-btn winter-skip winter-skip-right" onclick="skipToSeason(event)">WINTER</div>
         <div class="skip-btn winter-skip winter-skip-right-left" onclick="skipToSeason(event)"></div>
     </div>
-    <div id="tile-info" class="popup">
-        <div class="shader" onclick="event.stopPropagation();event.currentTarget.parentElement.classList.remove('opened');"></div>
-
+    <div class="popup" onclick="event.stopPropagation();event.currentTarget.classList.remove('opened');">
+        <div id="tile-info"></div>
         <div id="tile-info-bottom"></div>
     </div>
     <div id="images" style="display:none;">
