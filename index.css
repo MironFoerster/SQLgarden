@@ -25,24 +25,47 @@ h1 {
 }
 
 input[type=submit] {
-    padding: 0 2em;
-    height: 3em;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: space-around;
     border-radius: 20px;
+    grid-row: 1;
+    grid-column: 2;
 }
+input[type=submit]:disabled {
+    background-color: rgb(73, 56, 50);
+}
+
+
 input[type=text] {
-    height: 2em;
+    box-sizing: border-box;
+    padding-left: 10px;
+    grid-row: 1;
+    grid-column: 1;
+    position: relative;
+    z-index: 1;
+    border-radius: 20px;
+    font-size: 20px;
+    height: 10vh;
+    width: 100%;
+    margin-bottom: 10px;
 }
 
-#new-form {
+input[type=text].invalid {
+    background-color: rgb(245, 112, 63);
+}
+
+form {
+    width: 50vw;
+    height: 50vh;
     margin-top: 10vh;
+    display: grid;
+    grid-template-columns: 70% 30%;
+    grid-template-rows: 20% 80%;
+    grid-column-gap: 10px;
 }
 
-#old-form {
-    margin-top: 20vh;
-}
 input[type=radio] {
     display: none;
 }
@@ -51,24 +74,44 @@ input[type=radio]:checked + label {
     background-color: rgb(129, 240, 129);
 }
 
+#choose-hover {
+    grid-row: 1;
+    grid-column: 1;
+    overflow: visible;
+}
+
+#choose-hover:hover {
+    grid-row: 1/3;
+}
+
+::-webkit-scrollbar {
+    width: 0px;
+    background: transparent; /* make scrollbar transparent */
+}
+
 #chooser {
+    grid-row: 2;
+    grid-column: 1;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    /*transition: max-height 0.2s ease;*/   
-    max-height: 10vh;
+    align-items: stretch;
+    transition: height 0.2s ease, opacity 0.2s ease;
     overflow-y: scroll;
+    height: 0;
+    opacity: 0;
+    border-radius: 20px;
 }
 #chooser.open {
-    height: auto;
-    max-height: 30vh;
+    height: 40vh;
     overflow-y: scroll;
+    opacity: 1;
 }
+
 label {
     flex-grow: 0;
     flex-shrink: 0;
     height: 10vh;
-    width: 20vw;
     display: flex;
     align-items: center;
     justify-content: space-around;
@@ -77,8 +120,4 @@ label {
 
 label:hover {
     background-color: rgb(88, 153, 88);
-}
-
-form {
-    display: flex;
 }

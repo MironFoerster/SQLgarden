@@ -6,13 +6,18 @@
 	<title>SQLgarden</title>
     <link rel="stylesheet" href="./garden.css">
     <script>
+        
+        alert("hi");
         <?php
-            if ($_REQUEST["entermode"] == "new") {
-                // create new game
-            }
+            $ch = $_REQUEST["gamechoice"];
             $gamename = $_REQUEST["gamename"];
             
             $pdo = new PDO('mysql:host=localhost;dbname=sqlgarden', 'root', '');
+
+            if ($_REQUEST["gamechoice"] == "new-game") {
+                $pdostmt = $pdo->prepare('INSERT INTO games (name, money, elapsedtime) VALUES (:name, 0, 0)');
+                $pdostmt->execute(array('name'=>$gamename));
+            }
 
             $shopArrs = array();
         ?>
@@ -100,6 +105,8 @@
                 echo json_encode($gamestateArr);
             ?>
         }
+        console.log("game_data");
+        console.log(game_data);
 
     </script>
     <script src="./garden.js"></script>
