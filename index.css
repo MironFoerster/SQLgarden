@@ -1,5 +1,6 @@
 html {
     scroll-behavior: smooth;
+    margin:0;
 }
 
 body {
@@ -7,13 +8,41 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-evenly;
+    justify-content: flex-start;
+    font-family: sans-serif;
+    height: 100vh;
+    font-size: 30px;
+    margin:0;
 }
 
 h1 {
     color: rgb(153, 42, 42);
+    font-weight: 900;
+    font-family: monospace;
+    font-size: 62px;
+    margin: 0;
+    margin-top: 10vh;
 }
 
+input[type=submit] {
+    padding: 0 2em;
+    height: 3em;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    border-radius: 20px;
+}
+input[type=text] {
+    height: 2em;
+}
+
+#new-form {
+    margin-top: 10vh;
+}
+
+#old-form {
+    margin-top: 20vh;
+}
 input[type=radio] {
     display: none;
 }
@@ -22,8 +51,34 @@ input[type=radio]:checked + label {
     background-color: rgb(129, 240, 129);
 }
 
-input[type=radio] + label {
-    background-color: rgb(129, 240, 129);
+#chooser {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    /*transition: max-height 0.2s ease;*/   
+    max-height: 10vh;
+    overflow-y: scroll;
+}
+#chooser.open {
+    height: auto;
+    max-height: 30vh;
+    overflow-y: scroll;
+}
+label {
+    flex-grow: 0;
+    flex-shrink: 0;
+    height: 10vh;
+    width: 20vw;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    background-color: rgb(18, 83, 18);
 }
 
-label 
+label:hover {
+    background-color: rgb(88, 153, 88);
+}
+
+form {
+    display: flex;
+}
