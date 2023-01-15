@@ -10,120 +10,95 @@
             if ($_REQUEST["entermode"] == "new") {
                 // create new game
             }
-            $server_name='localhost';
-            $username='root';
-            $password='';
-            $database_name='sqlgarden';
+            $gamename = $_REQUEST["gamename"];
+            
+            $pdo = new PDO('mysql:host=localhost;dbname=sqlgarden', 'root', '');
 
-            $conn=mysqli_connect($server_name,$username,$password,$database_name);
-            if (!$conn) {
-                die('Connection failed');
-            }
             $shopArrs = array();
         ?>
 
         const STATIC_DATA = {
+            awards:
+                <?php
+                    $pdostmt = $pdo->query('SELECT * from awards');
+                    $awardsArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
+                    $shopArrs[] = $awardsArr;
+                    echo json_encode($awardsArr);
+                ?>,
+
             tools:
                 <?php
-                    $sql = 'SELECT * from tools;';
-                    $result=mysqli_query($conn, $sql);
-                    $toolsArr = array();
-                    while ($db_field = mysqli_fetch_assoc($result)) {
-                        $toolsArr[] = $db_field;
-                    }
+                    $pdostmt = $pdo->query('SELECT * from tools');
+                    $toolsArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
                     $shopArrs[] = $toolsArr;
                     echo json_encode($toolsArr);
                 ?>,
 
             boosters:
                 <?php
-                    $sql = 'SELECT * from boosters;';
-                    $result=mysqli_query($conn, $sql);
-                    $boostersArr = array();
-                    while ($db_field = mysqli_fetch_assoc($result)) {
-                        $boostersArr[] = $db_field;
-                    }
+                    $pdostmt = $pdo->query('SELECT * from boosters');
+                    $boostersArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
                     $shopArrs[] = $boostersArr;
                     echo json_encode($boostersArr);
                 ?>,
 
             flowers:
                 <?php
-                    $sql = 'SELECT * from flowers;';
-                    $result=mysqli_query($conn, $sql);
-                    $flowersArr = array();
-                    while ($db_field = mysqli_fetch_assoc($result)) {
-                        $flowersArr[] = $db_field;
-                    }
+                    $pdostmt = $pdo->query('SELECT * from flowers');
+                    $flowersArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
                     $shopArrs[] = $flowersArr;
                     echo json_encode($flowersArr);
                 ?>,
 
             buildings:
                 <?php
-                    $sql = 'SELECT * from buildings;';
-                    $result=mysqli_query($conn, $sql);
-                    $buildingsArr = array();
-                    while ($db_field = mysqli_fetch_assoc($result)) {
-                        $buildingsArr[] = $db_field;
-                    }
+                    $pdostmt = $pdo->query('SELECT * from buildings');
+                    $buildingsArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
                     $shopArrs[] = $buildingsArr;
                     echo json_encode($buildingsArr);
                 ?>,            
         }
-        let gamestates = <?php
-                $sql = 'SELECT * from gamestates;';
-                $result=mysqli_query($conn, $sql);
-                echo json_encode(mysqli_fetch_assoc($result));
-            ?>
         
-        Object.keys(gamestates).forEach(key=>{gamestates[key] = parseInt(gamestates[key])})
+        //Object.keys(gamestates).forEach(key=>{gamestates[key] = parseInt(gamestates[key])})
         let game_data = {
             awards:
                 <?php
-                    $sql = 'SELECT * from awards;';
-                    $result=mysqli_query($conn, $sql);
-                    $awardsArr = array();
-                    while ($db_field = mysqli_fetch_assoc($result)) {
-                        $awardsArr[] = $db_field;
-                    }
+                    $pdostmt = $pdo->prepare('SELECT * from awarded WHERE gamename = ?');
+                    $pdostmt->execute(array($gamename));
+                    $awardedArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
                     echo json_encode($awardsArr);
                 ?>,
 
             shelf:
                 <?php
-                    $sql = 'SELECT * from shelf;';
-                    $result=mysqli_query($conn, $sql);
-                    $shelfArr = array();
-                    while ($db_field = mysqli_fetch_assoc($result)) {
-                        $shelfArr[] = $db_field;
-                    }
+                    $pdostmt = $pdo->prepare('SELECT * from shelf WHERE gamename = ?');
+                    $pdostmt->execute(array($gamename));
+                    $shelfArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
                     echo json_encode($shelfArr);
                 ?>,
 
             tiles:
                 <?php
-                    $sql = 'SELECT * from tiles;';
-                    $result=mysqli_query($conn, $sql);
-                    $newArr = array();
-                    while ($db_field = mysqli_fetch_assoc($result)) {
-                        $newArr[] = $db_field;
-                    }
-                    echo json_encode($newArr);
+                    $pdostmt = $pdo->prepare('SELECT * from tiles WHERE gamename = ?');
+                    $pdostmt->execute(array($gamename));
+                    $tilesArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
+                    echo json_encode($tilesArr);
                 ?>,
 
             builts:
                 <?php
-                    $sql = 'SELECT * from builts;';
-                    $result=mysqli_query($conn, $sql);
-                    $newArr = array();
-                    while ($db_field = mysqli_fetch_assoc($result)) {
-                        $newArr[] = $db_field;
-                    }
-                    echo json_encode($newArr);
+                    $pdostmt = $pdo->prepare('SELECT * from builts WHERE gamename = ?');
+                    $pdostmt->execute(array($gamename));
+                    $builtArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
+                    echo json_encode($builtArr);
                 ?>,
 
-            ...gamestates
+            ...<?php
+                $pdostmt = $pdo->prepare('SELECT * from games WHERE name = ?');
+                $pdostmt->execute(array($gamename));
+                $gamestateArr = $pdostmt->fetch(PDO::FETCH_ASSOC);
+                echo json_encode($gamestateArr);
+            ?>
         }
 
     </script>

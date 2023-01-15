@@ -14,13 +14,15 @@
         <input type="submit" value=">">
     </form>
     <form action="/sqlgarden/garden.php" method="post">
-        <?php
-            $pdo = new PDO('mysql:host=localhost;dbname=sqlgarden', 'root', '');
-            foreach($pdo->query('SELECT name FROM gamestates') as $row) {
-                echo '<input type="radio" name="gamechoice" value="'.$row['name'].'">';
-                echo '<label for="'.$row['name'].'">'.$row['name'].'</label>';
-            }
-        ?>
+        <div id="chooser">
+            <?php
+                $pdo = new PDO('mysql:host=localhost;dbname=sqlgarden', 'root', '');
+                foreach($pdo->query('SELECT name FROM gamestates') as $row) {
+                    echo '<input type="radio" name="gamechoice" value="'.$row['name'].'">';
+                    echo '<label for="'.$row['name'].'">'.$row['name'].'</label>';
+                }
+            ?>
+        </div>
         <input type="hidden" name="entermode" value="old">
         <input type="submit" value="Enter Game">
     </form>

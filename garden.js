@@ -84,14 +84,15 @@ const skipToSeason = (evt) => {
 }
 
 
-const updateDatabase = (table_name, data=[], drop=false) => {
+const updateDatabase = (table_name, rows=[], del=false) => {
     fetch('/localhost/sqlgarden/test.php', {
         method: 'POST',
         headers: {ContentType: 'application/json'},
         body: JSON.stringify({
-            table_name: table_name,
-            data: data,
-            drop: drop
+            tablename: table_name,
+            rows: rows,
+            del: del,
+            gamename: game_data["name"]
             })
         }
     )
