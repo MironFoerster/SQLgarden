@@ -9,11 +9,11 @@
     <link rel="stylesheet" href="./index.css">
 </head>
 <body>
-    <h1>Welcome to SQLgarden</h1>
+    <img id="logo" src="./images/logo.png" alt="">
     <form action="/sqlgarden/garden.php" method="post">
-        <input type="submit" id="submit-choice" value="Enter Game -->">
+        <input type="submit" id="submit-choice" value="Enter Game" disabled>
         <div id="choose-hover">
-        <input type="text" id="gamename-input" name="gamename" placeholder="Choose Game..." maxlength="10" readonly>
+        <input type="text" id="gamename-input" name="gamename" placeholder="Choose Game..." maxlength="20" readonly>
             <div id="chooser">
                 <?php
                     echo "<input type='radio' id='new-game' name='gamechoice' value='new-game'>\n";
