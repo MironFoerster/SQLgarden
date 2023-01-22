@@ -222,6 +222,11 @@ body {
 
 }
 
+.tool-shop-item img {
+    height: 72px;
+    aspect-ratio: 1;
+}
+
 .shop-item {
     width: 270px;
     height: 80px;

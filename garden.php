@@ -157,24 +157,17 @@
             <label for="buildings" onclick="navTo('buildings-header')">BUILDINGS</label>
         </div>
         <div id="tools-header" class="shop-header">TOOLS</div>
-        <div class="tool-shop-item">
-            <img src="./images/items/sickle.png" alt="SICKLE">
-        </div>
-        <div class="tool-shop-item">
-            <img src="./images/items/spade.png" alt="SPADE">
-        </div>
-        <div class="shop-item">
-            <img src="./images/items/spade.png">
-            <div class="item-title">Ultimate Spade</div>
-            <div class="item-desc">germprob +10%<br>prob -20%</div>
-            <button class="buy-btn"><div>45</div></button>
-        </div>
-
         <?php
-            $shopSections = array("tools", "boosters", "flowers", "buildings");
-            for ($i = 0; $i < 4; $i++) {
-                $section = $shopSections[$i];
+            foreach ($shopArrs["tools"] as $tool) {
+                echo(
+                    "<div class='tool-shop-item'>
+                    <img src='./images/items/{$tool["name"]}.png'>
+                    </div>"
+                );
+            }
 
+            $shopSections = array("boosters", "flowers", "buildings");
+            foreach ($shopSections as $section) {
                 echo('<div id="'.$section.'-header" class="shop-header">'.strtoupper($section).'</div>');
                 foreach ($shopArrs[$section] as $item) {
                     $name = $item["name"];
@@ -183,17 +176,11 @@
                             <img class='shop-img item-img' id='shop-$name' src='./images/items/$name.png'>
                             <div class='item-title'>$name</div>
                             <div class='item-desc'>$desc</div>");
-                        switch ($section) {
-                            case "flowers":
+                        if ($section == "flowers") {
                                 echo("<button class='buy-btn buy-flower-btn' onclick='changeCurrentActionTo(\"flower-$name\")'><div>{$item["cost"]}</div></button>
                                 <button class='buy-btn buy-seed-btn' onclick='changeCurrentActionTo(\"seed-$name\")'><div>{$item["cost"]}</div></button>");
-                                break;
-                            case "tools":
-                                echo("<button class='use-btn' onclick='changeCurrentActionTo(\"$name\")'>USE</button>");
-                                break;
-                            default:
+                        } else {
                                 echo("<button class='buy-btn' onclick='changeCurrentActionTo(\"$name\")'><div>{$item["cost"]}</div></button>");
-                                break;
                         }
                         
                     echo('</div>');
