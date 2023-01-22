@@ -6,8 +6,6 @@
 	<title>SQLgarden</title>
     <link rel="stylesheet" href="./garden.css">
     <script>
-        
-        alert("hi");
         <?php
             $ch = $_REQUEST["gamechoice"];
             $gamename = $_REQUEST["gamename"];
@@ -27,7 +25,6 @@
                 <?php
                     $pdostmt = $pdo->query('SELECT * from awards');
                     $awardsArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
-                    $shopArrs[] = $awardsArr;
                     echo json_encode($awardsArr);
                 ?>,
 
@@ -35,7 +32,7 @@
                 <?php
                     $pdostmt = $pdo->query('SELECT * from tools');
                     $toolsArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
-                    $shopArrs[] = $toolsArr;
+                    $shopArrs["tools"] = $toolsArr;
                     echo json_encode($toolsArr);
                 ?>,
 
@@ -43,7 +40,7 @@
                 <?php
                     $pdostmt = $pdo->query('SELECT * from boosters');
                     $boostersArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
-                    $shopArrs[] = $boostersArr;
+                    $shopArrs["boosters"] = $boostersArr;
                     echo json_encode($boostersArr);
                 ?>,
 
@@ -51,7 +48,7 @@
                 <?php
                     $pdostmt = $pdo->query('SELECT * from flowers');
                     $flowersArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
-                    $shopArrs[] = $flowersArr;
+                    $shopArrs["flowers"] = $flowersArr;
                     echo json_encode($flowersArr);
                 ?>,
 
@@ -59,7 +56,7 @@
                 <?php
                     $pdostmt = $pdo->query('SELECT * from buildings');
                     $buildingsArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
-                    $shopArrs[] = $buildingsArr;
+                    $shopArrs["buildings"] = $buildingsArr;
                     echo json_encode($buildingsArr);
                 ?>,            
         }
@@ -117,13 +114,16 @@
         <div id="shelf">
             <?php
             foreach ($flowersArr as $item) {
-                echo('<div class="shelf-item hidden" id="shelf-'.$item["name"].'">');
-                    echo('<img class="shelf-flower-img item-img" id="shelf-'.$item["name"].'-img" src="./images/items/'.$item["name"].'.gif">');
-                    echo('<img class="seed-img item-img" src="./images/items/seed.gif">');
-                    echo('<div class="item-title">'.$item["name"].'</div>');
-                    echo('<div class="item-desc">'.$item["description"].'</div>');
-                    echo('<div class="amount-btn" onclick="changeCurrentActionTo(\"shelf-'.$item["name"].'\")">'.$item["cost"].'</div>');
-                echo('</div>');
+                $name = $item["name"];
+                $desc = $item["description"];
+                $cost = $item["cost"];
+                echo("<div class='shelf-item hidden' id='shelf-$name'>
+                <img class='shelf-flower-img item-img' id='shelf-$name-img' src='./images/items/$name.png'>
+                <img class='seed-img item-img' src='./images/items/seed.png'>
+                <div class='item-title'>$name</div>
+                <div class='item-desc'>$desc</div>
+                <div class='amount-btn' onclick='changeCurrentActionTo(\"shelf-$name\")'>$cost</div>
+                </div>");
             }
             ?>
         </div>
@@ -157,41 +157,47 @@
             <label for="buildings" onclick="navTo('buildings-header')">BUILDINGS</label>
         </div>
         <div id="tools-header" class="shop-header">TOOLS</div>
+        <div class="tool-shop-item">
+            <img src="./images/items/sickle.png" alt="SICKLE">
+        </div>
+        <div class="tool-shop-item">
+            <img src="./images/items/spade.png" alt="SPADE">
+        </div>
         <div class="shop-item">
-            <img src="./images/items/spade.gif">
+            <img src="./images/items/spade.png">
             <div class="item-title">Ultimate Spade</div>
             <div class="item-desc">germprob +10%<br>prob -20%</div>
             <button class="buy-btn"><div>45</div></button>
         </div>
 
         <?php
-            $shopHeaders = array("tools", "boosters", "flowers", "buildings");
+            $shopSections = array("tools", "boosters", "flowers", "buildings");
             for ($i = 0; $i < 4; $i++) {
-                echo('<div id="'.$shopHeaders[$i].'-header" class="shop-header">'.strtoupper($shopHeaders[$i]).'</div>');
-                foreach ($shopArrs[$i] as $item) {
-                    if (strpos($item["name"], "-builtboost") == false) {
-                        echo("<div class='shop-item $shopHeaders[$i]-item' onmouseover='toggleItemHighlights(\"".$item['name']."\")' onmouseout='toggleItemHighlights()'>");
-                            echo('<img class="shop-img item-img" id="shop-'.$item["name"].'" src="./images/items/'.$item["name"].'.gif">');
-                            if ($shopHeaders[$i] == "flowers") {
-                                echo('<img class="seed-img item-img" src="./images/items/seed.gif">');
-                            }
-                            echo('<div class="item-title">'.$item["name"].'</div>');
-                            echo('<div class="item-desc">'.$item["description"].'</div>');
-                            switch ($shopHeaders[$i]) {
-                                case "flowers":
-                                    echo("<button class='buy-btn buy-flower-btn' onclick='changeCurrentActionTo(\"flower-".$item["name"]."\")'><div>".$item["cost"]."</div></button>");
-                                    echo("<button class='buy-btn buy-seed-btn' onclick='changeCurrentActionTo(\"seed-".$item["name"]."\")'><div>".$item["cost"]."</div></button>");
-                                    break;
-                                case "tools":
-                                    echo("<button class='use-btn' onclick='changeCurrentActionTo(\"".$item["name"]."\")'>USE</button>");
-                                    break;
-                                default:
-                                    echo("<button class='buy-btn' onclick='changeCurrentActionTo(\"".$item["name"]."\")'><div>".$item["cost"]."</div></button>");
-                                    break;
-                            }
-                            
-                        echo('</div>');
-                    }
+                $section = $shopSections[$i];
+
+                echo('<div id="'.$section.'-header" class="shop-header">'.strtoupper($section).'</div>');
+                foreach ($shopArrs[$section] as $item) {
+                    $name = $item["name"];
+                    $desc = $item["description"];
+                    echo("<div class='shop-item $section-item' onmouseover='toggleItemHighlights(\"$name\")' onmouseout='toggleItemHighlights()'>
+                            <img class='shop-img item-img' id='shop-$name' src='./images/items/$name.png'>
+                            <div class='item-title'>$name</div>
+                            <div class='item-desc'>$desc</div>");
+                        switch ($section) {
+                            case "flowers":
+                                echo("<button class='buy-btn buy-flower-btn' onclick='changeCurrentActionTo(\"flower-$name\")'><div>{$item["cost"]}</div></button>
+                                <button class='buy-btn buy-seed-btn' onclick='changeCurrentActionTo(\"seed-$name\")'><div>{$item["cost"]}</div></button>");
+                                break;
+                            case "tools":
+                                echo("<button class='use-btn' onclick='changeCurrentActionTo(\"$name\")'>USE</button>");
+                                break;
+                            default:
+                                echo("<button class='buy-btn' onclick='changeCurrentActionTo(\"$name\")'><div>{$item["cost"]}</div></button>");
+                                break;
+                        }
+                        
+                    echo('</div>');
+                    
                 }
             }
             
@@ -213,8 +219,8 @@
         <div id="tile-info-bottom"></div>
     </div>
     <div id="images" style="display:none;">
-        <img src="images/grass.gif" id="backdrop-season-0">;
-        <img src="images/grass.gif" id="backdrop-season-1">;
+        <img src="images/grass.jfif" id="backdrop-season-0">;
+        <img src="images/grass.jfif" id="backdrop-season-1">;
     </div>
 </body>
 </html>
