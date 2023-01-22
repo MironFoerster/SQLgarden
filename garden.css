@@ -1,8 +1,10 @@
+@font-face { font-family: ingame; src: url('./fonts/Sasha Play.otf'); } 
+
 * {
     padding: 0;
     margin: 0;
     box-sizing: border-box;
-    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    font-family: ingame;
 }
 
 html {
@@ -17,6 +19,10 @@ body {
     grid-template-columns: auto 300px;
     grid-template-rows: auto 20px;
     overflow: hidden;
+}
+
+* {
+    image-rendering: pixelated;
 }
 
 .hidden {
@@ -138,6 +144,12 @@ body {
     color: rgba(255, 255, 255, 0.7);
 }
 
+#money-display:before {
+    content: "💵";
+    position: relative;
+    top: -2.5px;
+}
+
 
 /*#shelf::before {
     content: "#";
@@ -170,6 +182,10 @@ body {
     grid-column: 2;
     grid-row: 1;
     background-color: rgb(84, 61, 52);
+    background-image: url(./images/pixel_wood_large.jfif);
+    background-repeat:repeat;
+    background-size: contain;
+    background-attachment: scroll;
     padding-top: 22px;
     padding-bottom: 100px;
 
@@ -181,7 +197,7 @@ body {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    justify-content: space-evenly;
+    justify-content: space-around;
     align-items: center;
 }
 
@@ -193,6 +209,17 @@ body {
     margin: 30px 0 10px 0;
     color:rgb(33 33 33);
     width: 270px;
+    text-align: center;
+}
+
+.tool-shop-item {
+    width: 80px;
+    aspect-ratio: 1;
+    background-color: #6f5244;
+    border: 4px solid rgb(58, 42, 36);
+    
+    margin: 0 0 15px 0;
+
 }
 
 .shop-item {
@@ -290,8 +317,6 @@ body {
 }
 
 canvas {
-    width: 100%;
-    height: 100%;
     grid-column: 1;
     grid-row: 1;
     pointer-events: none;
@@ -340,7 +365,7 @@ input[type="radio"] {
 }
 
 input[type="radio"] + label {
-    font-size: 14px;
+    font-size: 16px;
     background-color: black;
     border: 4px solid black;
     padding: 3px;
@@ -353,6 +378,9 @@ input[type="radio"]:checked + label {
     background-color: white;
 }
 
+input[type="radio"] + label:hover {
+    background-color: rgb(255 255 255 / 22%);
+}
 
 
 

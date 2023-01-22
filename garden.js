@@ -36,7 +36,7 @@ const buildItemsHighlightTiles = () => {
     }
     for (let sect of ["boosters", "flowers"]) {
         for (let item of STATIC_DATA[sect]) {
-            sess.items_highlight_tiles[item.name] = game_data.tiles.filter((t,i,a)=>t.boosters.includes(item.name) || t.flower == item.name).map(t=>tgToCvs([t.locx, t.locy]));
+            sess.items_highlight_tiles[item.name] = game_data.tiles.filter((t,i,a)=>t.boosters.includes(item.name) || t.flowername == item.name).map(t=>tgToCvs([t.locx, t.locy]));
         }
     }
 }
@@ -121,7 +121,7 @@ const changeSeason = (to_season) => {
 
 const drawBackdrop = () => {
     // full redraw of backdrop
-    const res = 500 // backdrop 500x500
+    const res = 170 // backdrop 500x500
     ctx = ctx_list[0] // backdrop context
     let img = document.getElementById("backdrop-season-"+sess.current_season);
     console.log(img);
@@ -153,7 +153,7 @@ const drawScene = (tiles=undefined) => {
         if (tiles) {
             ctx.clearRect(...topleft, ...topleft.map(v=>v+tile_size));
         }
-        ctx.drawImage(sess.cvs_images[tile.flower], ...topleft);
+        ctx.drawImage(sess.cvs_images[tile.flowername], ...topleft);
 
     }
 }
@@ -217,7 +217,7 @@ const gameLoop = (timestamp) => {
 
             // llalalalalalal: wakeupprob
             // check for flower
-            if (tile.flower) {
+            if (tile.flowername) {
                 // check for seeding
                 if (Math.floor(Math.random() * tile.invseedingprob) == 1) {
                     // execute seeding
@@ -334,11 +334,11 @@ const handleMouseMove = (evt) => {
                 hover_type = "tile-hover";
                 console.log("hov");
             } else if (sess.current_action.includes("flower")) {
-                if (!sess.hovered_tile.flower) {
+                if (!sess.hovered_tile.flowername) {
                     hover_type = "tile-hover";
                 }
             } else if (sess.current_action.includes("shelf")) {
-                if (!sess.hovered_tile.flower) {
+                if (!sess.hovered_tile.flowername) {
                     hover_type = "tile-hover";
                 }
             } else if (sess.current_action.includes("booster")) {
@@ -352,7 +352,7 @@ const handleMouseMove = (evt) => {
                     }
                 }
             } else if (sess.current_action.includes("sickle")) {
-                if (sess.hovered_tile.flower) {
+                if (sess.hovered_tile.flowername) {
                     hover_type = "tile-hover";
                 }
             } else if (sess.current_action.includes("seedcoll")) {
@@ -425,7 +425,9 @@ window.onload = () => {
     ui_cvs = document.getElementById("ui-cvs");
     cvs_list = document.getElementsByTagName("canvas");
     for (let cvs of cvs_list) {
-        ctx_list.push(cvs.getContext("2d"));
+        let ctx = cvs.getContext("2d");
+        ctx.imageSmoothingEnabled = false;
+        ctx_list.push(ctx);
     }
     
     sess.transform_x =  parseInt(window.getComputedStyle(canvas_cont).width)/2;
