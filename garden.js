@@ -280,11 +280,14 @@ const updateMoney = (amount) => {
     game_data.money += amount;
     document.getElementById("money-display").innerHTML = game_data.money;
     // update state of shop items
-    let items = document.getElementsByClassName("buy-btn")
+    let items = document.getElementsByClassName("use-btn")
 
     for (let i of items) {
-        i.classList.toggle("affordable", (parseFloat(i.querySelector("div").innerHTML)<=game_data.money&&!i.classList.contains("affordable"))||
-                                         (parseFloat(i.querySelector("div").innerHTML)>game_data.money&&i.classList.contains("affordable")))
+        if (i.dataset.price<=game_data.money) { //TODO
+            i.classList.add("affordable");
+        } else {
+            i.classList.remove("affordable");
+        }
     }
 }
 
@@ -394,7 +397,7 @@ const toggleItemHighlights = (item_name) => {
 }
 
 const changeCurrentActionTo = (to) => {
-    // to can be "shelf-something" or "flower-something" or "booster-something"
+    // to can be "shelf-something" or "flower-plant-something" or "booster-something"
     if (!sess.current_action == "lens") {
         for (let el of document.getElementsByClassName("active-item")) {
             // only one

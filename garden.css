@@ -207,7 +207,7 @@ body {
 
 .shop-header {
     margin: 30px 0 10px 0;
-    color:rgb(33 33 33);
+    color:rgb(0, 0, 0);
     width: 270px;
     text-align: center;
 }
@@ -228,74 +228,70 @@ body {
 }
 
 .shop-item {
-    width: 270px;
-    height: 80px;
-    background-color: rgb(77, 57, 50);
-    border: 4px solid rgb(58, 42, 36);
+    width: 90%;
+    box-sizing: border-box;
+    background-color: rgb(58, 42, 36);
+    border-radius: 20px;
     display: grid;
-    grid-template-columns: 76px auto 80px;
-    grid-template-rows: 20px auto;
-    align-items: center;
+    grid-template-columns: 80px auto 80px;
+    grid-template-rows: 100%;
+    grid-column-gap: 0px;
+    align-items: stretch;
     margin: 0 0 15px 0;
+    border: 2px solid rgb(50, 31, 24);
+    overflow: hidden;
+}
+.shop-item * {
+    background-color: rgb(77, 57, 50);
 }
 .shop-item img {
     grid-column: 1;
-    grid-row: 1/3;
-    height: 72px;
+    grid-row: 1;
+    width: 100%;
     aspect-ratio: 1;
-    border-right-color: rgb(58, 42, 36);
-    border-right-style: solid;
-    border-right-width: 4px;
     box-sizing: content-box;
 }
 .shop-item .item-title {
-    grid-column: 2;
-    grid-row: 1;
     font-size: 20px;
     font-weight: bold;
 }
-.shop-item .item-desc {
+.shop-item .item-content {
     grid-column: 2;
-    grid-row: 2;
+    grid-row: 1;
     font-size: 11px;
+    background-color: rgb(77, 57, 50);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
-.buy-btn, .use-btn {
+
+.shop-item .item-buttons {
     grid-column: 3;
-    grid-row: 1/3;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: space-evenly;
+    padding: 8px 8px 8px 8px;
+    gap: 8px 0;
+}
+.use-btn {
     height: 30px;
-    justify-self: stretch;
-    align-self: center;
-    overflow: hidden;
     background-color: gray;
     font-weight: bold;
     border-radius: 10px;
     color:rgba(18, 18, 18, 0.635);
     pointer-events: none;
-    transition: all 0.3s;
-    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
 }
-.buy-btn.affordable, .use-btn {
-    background-color: greenyellow;
+.use-btn.affordable {
     pointer-events: all;
-}
-.buy-btn div {
-    transition: inherit;
-    transform: translateY(0%);
-    position:absolute;
-    top: 0em;
-}
-.buy-btn::before {
-    transition: inherit;
-    transform: translateY(0%);
-    position:absolute;
-    top: -1.1em;
-    content: "USE";
-}
-.buy-btn:hover div {
-    transform: translateY(100%);
-}
-.buy-btn:hover::before {
-    transform: translateY(100%);
+    color:rgba(0, 0, 0, 0.635);
+    background-color: rgb(50, 31, 24);
 }
 /*
 .shop-rect {

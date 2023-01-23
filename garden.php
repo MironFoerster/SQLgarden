@@ -38,7 +38,7 @@
 
             boosters:
                 <?php
-                    $pdostmt = $pdo->query('SELECT * from boosters');
+                    $pdostmt = $pdo->query('SELECT * from boosters ORDER BY boosters.price ASC');
                     $boostersArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
                     $shopArrs["boosters"] = $boostersArr;
                     echo json_encode($boostersArr);
@@ -46,7 +46,7 @@
 
             flowers:
                 <?php
-                    $pdostmt = $pdo->query('SELECT * from flowers');
+                    $pdostmt = $pdo->query('SELECT * from flowers ORDER BY flowers.price ASC');
                     $flowersArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
                     $shopArrs["flowers"] = $flowersArr;
                     echo json_encode($flowersArr);
@@ -54,7 +54,7 @@
 
             buildings:
                 <?php
-                    $pdostmt = $pdo->query('SELECT * from buildings');
+                    $pdostmt = $pdo->query('SELECT * from buildings ORDER BY buildings.price ASC');
                     $buildingsArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
                     $shopArrs["buildings"] = $buildingsArr;
                     echo json_encode($buildingsArr);
@@ -99,6 +99,9 @@
                 $pdostmt = $pdo->prepare('SELECT * from games WHERE name = ?');
                 $pdostmt->execute(array($gamename));
                 $gamestateArr = $pdostmt->fetch(PDO::FETCH_ASSOC);
+
+                $gamestateArr["money"] = intval($gamestateArr["money"]);
+                $gamestateArr["elapsedtime"] = intval($gamestateArr["elapsedtime"]);
                 echo json_encode($gamestateArr);
             ?>
         }
@@ -116,13 +119,12 @@
             foreach ($flowersArr as $item) {
                 $name = $item["name"];
                 $desc = $item["description"];
-                $cost = $item["cost"];
+                $price = $item["price"];
                 echo("<div class='shelf-item hidden' id='shelf-$name'>
                 <img class='shelf-flower-img item-img' id='shelf-$name-img' src='./images/items/$name.png'>
-                <img class='seed-img item-img' src='./images/items/seed.png'>
                 <div class='item-title'>$name</div>
                 <div class='item-desc'>$desc</div>
-                <div class='amount-btn' onclick='changeCurrentActionTo(\"shelf-$name\")'>$cost</div>
+                <div class='amount-btn' onclick='changeCurrentActionTo(\"shelf-$name\")'>$price</div>
                 </div>");
             }
             ?>
@@ -167,23 +169,36 @@
             }
 
             $shopSections = array("boosters", "flowers", "buildings");
+            $emos = array("boosters"=>"✨", "flowers"=>"🌰", "buildings"=>"⚙️");
             foreach ($shopSections as $section) {
                 echo('<div id="'.$section.'-header" class="shop-header">'.strtoupper($section).'</div>');
+                $emo = $emos[$section];
                 foreach ($shopArrs[$section] as $item) {
                     $name = $item["name"];
                     $desc = $item["description"];
+                    $price = "<span>$emo {$item['price']} $</span>";
+                    if ($section == "flowers") {
+                        $plantprice = $item['price']*3;
+                        $price .= "<span>🌱 $plantprice $</span>";
+                    }
+
                     echo("<div class='shop-item $section-item' onmouseover='toggleItemHighlights(\"$name\")' onmouseout='toggleItemHighlights()'>
                             <img class='shop-img item-img' id='shop-$name' src='./images/items/$name.png'>
-                            <div class='item-title'>$name</div>
-                            <div class='item-desc'>$desc</div>");
+                            <div class='item-content'>
+                                <div class='item-title'>$name</div>
+                                <div class='item-price'>$price</div>
+                            </div>
+                            <div class='item-buttons'>");
                         if ($section == "flowers") {
-                                echo("<button class='buy-btn buy-flower-btn' onclick='changeCurrentActionTo(\"flower-$name\")'><div>{$item["cost"]}</div></button>
-                                <button class='buy-btn buy-seed-btn' onclick='changeCurrentActionTo(\"seed-$name\")'><div>{$item["cost"]}</div></button>");
+                                echo("<div class='use-btn buy-seed-btn' data-price='{$item['price']}' onclick='changeCurrentActionTo(\"flower-seed-$name\")'>SEED</div>
+                                <div class='use-btn buy-flower-btn' data-price='$plantprice' onclick='changeCurrentActionTo(\"flower-plant-$name\")'>PLANT</div>");
+                        } else if ($section == "boosters"){
+                                echo("<div class='use-btn' data-price='{$item['price']}' onclick='changeCurrentActionTo(\"$name\")'>APPLY</div>");
                         } else {
-                                echo("<button class='buy-btn' onclick='changeCurrentActionTo(\"$name\")'><div>{$item["cost"]}</div></button>");
+                            echo("<div class='use-btn' data-price='{$item['price']}' onclick='changeCurrentActionTo(\"$name\")'>BUILD</div>");
                         }
                         
-                    echo('</div>');
+                    echo("</div></div>");
                     
                 }
             }
