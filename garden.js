@@ -43,14 +43,17 @@ const buildItemsHighlightTiles = () => {
 
 const gatherCvsImages = () => {
     for (let flower of STATIC_DATA.flowers) {
-        sess.cvs_images[flower.name] = document.getElementById("shelf-"+flower.name+"-img");
+        sess.cvs_images[flower.name] = document.getElementById("shelf-"+flower.name+"-img"); //TODO solve cleaner with: new Image()
+        //TODO increase canvas resolution, possibly make user adjustable
+        //todo make border around plantable area (forest or something)
     }
 }
 
 const setCanvasSize = () => {
+    const cvs_res = 1; //canvas pixel per style pixel
     const cont_style = window.getComputedStyle(canvas_cont);
-    sess.cvs_width = parseInt(cont_style.width);
-    sess.cvs_height = parseInt(cont_style.height);
+    sess.cvs_width = parseInt(parseFloat(cont_style.width)*cvs_res);
+    sess.cvs_height = parseInt(parseFloat(cont_style.height)*cvs_res);
     for (var cvs of cvs_list) {
         cvs.width = sess.cvs_width;
         cvs.height = sess.cvs_height;
@@ -121,24 +124,21 @@ const changeSeason = (to_season) => {
 
 const drawBackdrop = () => {
     // full redraw of backdrop
-    const res = 170 // backdrop 500x500
-    ctx = ctx_list[0] // backdrop context
+    const res = 41; // backdrop 500x500 ////TODO 81 is the minimum image size that can be drawn on css size*2; 41 on css size *1 canvas
+    ctx = ctx_list[0]; // backdrop context
     let img = document.getElementById("backdrop-season-"+sess.current_season);
-    console.log(img);
     
     let x_num = Math.ceil((sess.frame_rect[2]) / res) + 1;
     let y_num = Math.ceil((sess.frame_rect[3]) / res) + 1;
-    console.log(x_num, y_num);
 
     let x_offset = Math.floor(sess.frame_rect[0] / res);
     let y_offset = Math.floor(sess.frame_rect[1] / res);
-    if (x_num * y_num < 200) {
-    for (let i = 0; i < x_num; i++) {
-        for (let j = 0; j < y_num; j++) {
-          ctx.drawImage(img, (i + x_offset) * res, (j + y_offset) * res);
+        for (let i = 0; i < x_num; i++) {
+            for (let j = 0; j < y_num; j++) {
+            ctx.drawImage(img, (i + x_offset) * res, (j + y_offset) * res);
+            }
         }
-      }
-    }
+
 }
 
 let topleft;
@@ -154,8 +154,8 @@ const drawScene = (tiles=undefined) => {
             ctx.clearRect(...topleft, ...topleft.map(v=>v+tile_size));
         }
         ctx.drawImage(sess.cvs_images[tile.flowername], ...topleft);
-
     }
+    ctx.drawImage(document.getElementById("backdrop-season-1"), 0, 0);
 }
 
 const animationLoop = (timestamp) => {
@@ -283,7 +283,7 @@ const updateMoney = (amount) => {
     let items = document.getElementsByClassName("use-btn")
 
     for (let i of items) {
-        if (i.dataset.price<=game_data.money) { //TODO
+        if (i.dataset.price<=game_data.money) {
             i.classList.add("affordable");
         } else {
             i.classList.remove("affordable");
@@ -445,7 +445,7 @@ window.onload = () => {
     ui_cvs.onwheel = (evt) => {
         d = -evt.deltaY * 10;
         let factor = Math.pow(1.001, d);
-        sess.transform_scale = Math.max(0.2, Math.min(factor * sess.transform_scale, 3));
+        sess.transform_scale = Math.max(0.000001, Math.min(factor * sess.transform_scale, 20));
         if (sess.transform_scale < 3 && sess.transform_scale > 0.2) {
             sess.transform_x += (evt.offsetX - sess.transform_x) * (1-factor);
             sess.transform_y += (evt.offsetY - sess.transform_y) * (1-factor);
