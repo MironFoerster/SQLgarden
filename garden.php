@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<title>SQLgarden</title>
     <link rel="stylesheet" href="./garden.css">
+    <script src="./game.js"></script>
     <script>
         <?php
             $ch = $_REQUEST["gamechoice"];
@@ -13,7 +14,7 @@
             $pdo = new PDO('mysql:host=localhost;dbname=sqlgarden', 'root', '');
 
             if ($_REQUEST["gamechoice"] == "new-game") {
-                $pdostmt = $pdo->prepare('INSERT INTO games (name, money, elapsedtime) VALUES (:name, 0, 0)');
+                $pdostmt = $pdo->prepare('INSERT INTO games (name, money, elapsedweeks) VALUES (:name, 0, 0)');
                 $pdostmt->execute(array('name'=>$gamename));
             }
 
@@ -63,7 +64,7 @@
         
         //Object.keys(gamestates).forEach(key=>{gamestates[key] = parseInt(gamestates[key])})
         let game_data = {
-            awards:
+            awarded:
                 <?php
                     $pdostmt = $pdo->prepare('SELECT * from awarded WHERE gamename = ?');
                     $pdostmt->execute(array($gamename));
@@ -101,30 +102,27 @@
                 $gamestateArr = $pdostmt->fetch(PDO::FETCH_ASSOC);
 
                 $gamestateArr["money"] = intval($gamestateArr["money"]);
-                $gamestateArr["elapsedtime"] = intval($gamestateArr["elapsedtime"]);
+                $gamestateArr["elapsedweeks"] = intval($gamestateArr["elapsedweeks"]);
                 echo json_encode($gamestateArr);
             ?>
         }
-        console.log("game_data");
-        console.log(game_data);
 
     </script>
-    <script src="./garden.js"></script>
 </head>
 <body>
     <div id="top-bar">
-        <div id="money-display"><span style="font-size:0.7em;">&#128176;</span> 50</div>
+        <div id="money-display"><span style="font-size:0.7em;"></span> 50</div>
         <div id="shelf">
             <?php
             foreach ($flowersArr as $item) {
                 $name = $item["name"];
                 $desc = $item["description"];
                 $price = $item["price"];
-                echo("<div class='shelf-item hidden' id='shelf-$name'>
+                echo("<div class='shelf-item hidden' id='shelf-$name'> // todo
                 <img class='shelf-flower-img item-img' id='shelf-$name-img' src='./images/items/$name.png'>
                 <div class='item-title'>$name</div>
                 <div class='item-desc'>$desc</div>
-                <div class='amount-btn' onclick='changeCurrentActionTo(\"shelf-$name\")'>$price</div>
+                <div class='action-btn'>$price</div>
                 </div>");
             }
             ?>
@@ -134,36 +132,42 @@
     <div id="awards-hover">
         <div id="awards-hider">
             <div id="awards">
-                <span id="awards-title">&#127942;    AWARDS</span>
+                <span id="awards-title">🎖️   AWARDS</span>
                 
             </div>
         </div>
     </div>
+    <div id="expand">👷‍♀️ EXPAND GARDEN</div>
+   
     
     <div id="canvas-container">
-        <canvas id="backdrop-cvs"></canvas>
-        <canvas id="scene-cvs"></canvas>
+        <canvas id="backdrop-cvs" class="prerendered-cvs"></canvas>
+        <canvas id="flowers-cvs" class="prerendered-cvs"></canvas>
+        <canvas id="highlight-cvs" class="prerendered-cvs"></canvas>
         <canvas id="animate-cvs"></canvas>
         <canvas id="ui-cvs"></canvas>
+        <div id="tile-info"></div>
     </div>
 
-	<div id="shop" onscroll="alterRadios();">
+    <div id="shop-info" class="hidden"></div>
+
+	<div id="shop">
         <div id="nav-bar">
             <input id="tools-radio" type="radio" name="nav" value="tools"checked>
-            <label for="tools" onclick="navTo('tools-header')">TOOLS</label>
+            <label for="tools" class="nav-label">TOOLS</label>
             <input id="boosters-radio" type="radio" name="nav" value="boosters">
-            <label for="boosters" onclick="navTo('boosters-header')">BOOSTERS</label>
+            <label for="boosters" class="nav-label">BOOSTERS</label>
             <input id="flowers-radio" type="radio" name="nav" value="flowers">
-            <label for="flowers" onclick="navTo('flowers-header')">FLOWERS</label>
+            <label for="flowers" class="nav-label">FLOWERS</label>
             <input id="buildings-radio" type="radio" name="nav" value="buildings">
-            <label for="buildings" onclick="navTo('buildings-header')">BUILDINGS</label>
+            <label for="buildings" class="nav-label">BUILDINGS</label>
         </div>
         <div id="tools-header" class="shop-header">TOOLS</div>
         <?php
             foreach ($shopArrs["tools"] as $tool) {
                 echo(
-                    "<div class='tool-shop-item'>
-                    <img src='./images/items/{$tool["name"]}.png'>
+                    "<div class='tool-shop-item' id='tools-{$tool["name"]}'>
+                    <img class='action-btn hover-content' src='./images/items/{$tool["name"]}.png'>
                     </div>"
                 );
             }
@@ -182,20 +186,20 @@
                         $price .= "<span>🌱 $plantprice $</span>";
                     }
 
-                    echo("<div class='shop-item $section-item' onmouseover='toggleItemHighlights(\"$name\")' onmouseout='toggleItemHighlights()'>
-                            <img class='shop-img item-img' id='shop-$name' src='./images/items/$name.png'>
-                            <div class='item-content'>
+                    echo("<div class='shop-item $section-item' id='$section-$name'>
+                            <img class='shop-img item-img hover-icon' src='./images/items/$name.png'>
+                            <div class='item-content hover-content'>
                                 <div class='item-title'>$name</div>
                                 <div class='item-price'>$price</div>
                             </div>
                             <div class='item-buttons'>");
                         if ($section == "flowers") {
-                                echo("<div class='use-btn buy-seed-btn' data-price='{$item['price']}' onclick='changeCurrentActionTo(\"flower-seed-$name\")'>SEED</div>
-                                <div class='use-btn buy-flower-btn' data-price='$plantprice' onclick='changeCurrentActionTo(\"flower-plant-$name\")'>PLANT</div>");
+                                echo("<div class='buy-btn action-btn' data-price='{$item['price']}'>SEED</div>
+                                <div class='buy-btn action-btn' data-price='$plantprice'>PLANT</div>");
                         } else if ($section == "boosters"){
-                                echo("<div class='use-btn' data-price='{$item['price']}' onclick='changeCurrentActionTo(\"$name\")'>APPLY</div>");
+                                echo("<div class='buy-btn action-btn' data-price='{$item['price']}'>APPLY</div>");
                         } else {
-                            echo("<div class='use-btn' data-price='{$item['price']}' onclick='changeCurrentActionTo(\"$name\")'>BUILD</div>");
+                            echo("<div class='buy-btn action-btn' data-price='{$item['price']}'>BUILD</div>");
                         }
                         
                     echo("</div></div>");
@@ -209,20 +213,23 @@
 
     <div id="season-bar">
         <div id="season-marker"></div>
-        <div class="skip-btn winter-skip winter-skip-left" onclick="skipToSeason(event)"></div>
-        <div class="skip-btn spring-skip" onclick="skipToSeason(event)">SPRING</div>
-        <div class="skip-btn summer-skip" onclick="skipToSeason(event)">SUMMER</div>
-        <div class="skip-btn autumn-skip activeseason" onclick="skipToSeason(event)">AUTUMN</div>
-        <div class="skip-btn winter-skip winter-skip-right" onclick="skipToSeason(event)">WINTER</div>
-        <div class="skip-btn winter-skip winter-skip-right-left" onclick="skipToSeason(event)"></div>
+        <div class="skip-btn winter-skip winter-skip-left"></div>
+        <div class="skip-btn spring-skip">SPRING</div>
+        <div class="skip-btn summer-skip">SUMMER</div>
+        <div class="skip-btn autumn-skip activeseason">AUTUMN</div>
+        <div class="skip-btn winter-skip winter-skip-right">WINTER</div>
+        <div class="skip-btn winter-skip winter-skip-right-left"></div>
     </div>
-    <div class="popup" onclick="event.stopPropagation();event.currentTarget.classList.remove('opened');">
-        <div id="tile-info"></div>
-        <div id="tile-info-bottom"></div>
-    </div>
-    <div id="images" style="display:none;">
-        <img src="images/grass.jfif" id="backdrop-season-0">;
-        <img src="images/grass.jfif" id="backdrop-season-1">;
+    <div>
+        <?php
+            $directory = "images";
+            $images = array_merge(glob($directory . "/*.png"), glob($directory . "/*/*.png"));
+
+            foreach($images as $image) {
+                $id = basename($image, '.png');
+                echo "<img id='$id' class='img' src='$image' style='display:none;'>";
+            }
+        ?>
     </div>
 </body>
 </html>
