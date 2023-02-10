@@ -22,11 +22,11 @@
         ?>
 
         const STATIC_DATA = {
-            awards:
+            decos:
                 <?php
-                    $pdostmt = $pdo->query('SELECT * from awards');
-                    $awardsArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
-                    echo json_encode($awardsArr);
+                    $pdostmt = $pdo->query('SELECT * from decos');
+                    $decosArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
+                    echo json_encode($decosArr);
                 ?>,
 
             tools:
@@ -64,14 +64,6 @@
         
         //Object.keys(gamestates).forEach(key=>{gamestates[key] = parseInt(gamestates[key])})
         let game_data = {
-            awarded:
-                <?php
-                    $pdostmt = $pdo->prepare('SELECT * from awarded WHERE gamename = ?');
-                    $pdostmt->execute(array($gamename));
-                    $awardedArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
-                    echo json_encode($awardsArr);
-                ?>,
-
             shelf:
                 <?php
                     $pdostmt = $pdo->prepare('SELECT * from shelf WHERE gamename = ?');
@@ -85,6 +77,7 @@
                     $pdostmt = $pdo->prepare('SELECT * from tiles WHERE gamename = ?');
                     $pdostmt->execute(array($gamename));
                     $tilesArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
+                    $tilesArr = array_map(function($tile) {$tile["boosters"] = json_decode($tile["boosters"]); return $tile;}, $tilesArr);
                     echo json_encode($tilesArr);
                 ?>,
 
@@ -129,10 +122,10 @@
         </div>
     </div>
 
-    <div id="awards-hover">
-        <div id="awards-hider">
-            <div id="awards">
-                <span id="awards-title">🎖️   AWARDS</span>
+    <div id="decos-hover">
+        <div id="decos-hider">
+            <div id="decos">
+                <span id="decos-title">🎖️   AWARDS</span>
                 
             </div>
         </div>
