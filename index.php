@@ -10,7 +10,7 @@
 </head>
 <body>
     <img id="logo" src="./images/logo.png" alt="">
-    <form action="/sqlgarden/garden.php" method="post">
+    <form action="/sqlgarden/enter.php" method="post">
         <input type="submit" id="submit-choice" value="Enter Game" disabled>
         <div id="choose-hover">
         <input type="text" id="gamename-input" name="gamename" placeholder="Choose Game..." maxlength="20" readonly>

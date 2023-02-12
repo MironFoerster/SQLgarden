@@ -19,6 +19,7 @@ body {
     grid-template-columns: auto 300px;
     grid-template-rows: auto 20px;
     overflow: hidden;
+    z-index: 0;
 }
 
 * {
@@ -218,6 +219,7 @@ body {
 }
 
 #shop-info::before {
+    content:"";
     width: 10px;
     aspect-ratio: 1;
     transform: rotate(45deg), translate(50%,-50%);
@@ -233,7 +235,7 @@ body {
     text-align: center;
 }
 
-.tool-shop-item {
+.tool-item {
     width: 80px;
     aspect-ratio: 1;
     background-color: #6f5244;
@@ -243,10 +245,6 @@ body {
 
 }
 
-.tool-shop-item img {
-    height: 72px;
-    aspect-ratio: 1;
-}
 
 .shop-item {
     width: 90%;
@@ -297,7 +295,7 @@ body {
     padding: 8px 8px 8px 8px;
     gap: 8px 0;
 }
-.use-btn {
+.buy-btn {
     height: 30px;
     background-color: gray;
     font-weight: bold;
@@ -309,7 +307,7 @@ body {
     justify-content: center;
     flex-grow: 1;
 }
-.use-btn.affordable {
+.buy-btn.affordable {
     pointer-events: all;
     color:rgba(0, 0, 0, 0.635);
     background-color: rgb(50, 31, 24);
@@ -438,7 +436,6 @@ input[type="radio"] + label:hover {
     border-color: var(--markercolor);
     width: 10px;
     height: 7px;
-    z-index: 3;
     position: absolute;
     transition: left 1s linear;
     left: 0%;
@@ -533,59 +530,25 @@ input[type="radio"] + label:hover {
 
 /* popups */
 
-.popup #tile-info {
-    top: 50%;
-    left: 50%;
+#cvs-popup {
     position: absolute;
-    height: 40%;
-    width: 40%;
+    top: calc(calc(100vh - 20px) / 2);
+    left: calc(calc(100vw - 300px) / 2);
+    height: 200px;
+    width: 250px;
     background-color: rgb(209, 187, 61);
-    z-index: 10;
     border-radius: 20px;
-    visibility: hidden;
-    opacity: 0;
     transform: translate(-50%, -50%);
-    transition: all 0.3s;
 }
 
-.popup.opened #tile-info {
-    opacity: 1;
-    visibility: visible;
-    transform: translate(-50%, -60%);
-}
-
-
-.popup.opened {
-    visibility: visible;
-    pointer-events: all;
-    background-color: rgba(0,0,0,0.3);
-}
-
-.popup {
-    position: absolute;
-    width: 100vw;
+#popup-overlay {
+    position: fixed;
     height: 100vh;
-    background-color: rgba(0,0,0,0);
-    z-index: 9;
-    pointer-events: none;
+    width: 100vw;
+    top: 0px;
+    left: 0px;
+    background-color: #0000004f;
 }
-
-/*#tile-info-bottom {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translate(-50%, 100%);
-    width: 40px;
-    height: 60px;
-    background: inherit;
-}
-
-#tile-info-bottom::after,
-#tile-info-bottom::before {
-    width: 30px;
-    height: 30px;
-
-}*/
 
 #expand {
     position: absolute;
@@ -608,22 +571,24 @@ input[type="radio"] + label:hover {
     max-width: 400px;
 }
 
-#awards-hover {
+/*DECO*/
+
+#decos-hover {
     position: absolute;
     top: 15px;
     left: 15px;
     height: 40px;
     width: 40px;
     border-radius: 20px;
-    z-index: 5;
+    z-index: 0;
     background-color: rgba(118, 118, 118, 0);
 }
 
-#awards-hover:hover {
-    height: 300px;
-    width: 200px;
+#decos-hover:hover {
+    height: 400px;
+    width: 350px;
 }
-#awards-hider {
+#decos-hider {
     position: absolute;
     top: 20px;
     left: 20px;
@@ -637,16 +602,17 @@ input[type="radio"] + label:hover {
     opacity: 1;
 }
 
-#awards-hover:hover #awards-hider {
-    height: 700px;
+#decos-hover:hover #decos-hider {
+    height: 900px;
 }
 
-#awards {
+#decos {
+    pointer-events: all;
     top: 50%;
     left: 50%;
     transform: translate(-20px, -20px);
-    height: 300px;
-    width: 200px;
+    height: auto;
+    width: 350px;
     border-radius: 20px;
     background-color: #6f5244;
 
@@ -655,21 +621,97 @@ input[type="radio"] + label:hover {
     -ms-overflow-style: none;
     scrollbar-width: none;
 
+    padding: 20px;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    justify-content: space-evenly;
-    align-items: center;
+    justify-content: space-between;
+    align-items: flex-start;
 }
 
-#awards::-webkit-scrollbar {
+#decos::-webkit-scrollbar {
     display: none;
 }
-#awards-title {
+#decos-title {
     position: absolute;
     top: 8px;
     left: 9px;
 }
-#awards-title::first-letter {
+#decos-title::first-letter {
     margin-right: 40px;
+}
+
+.deco-item {
+    position: relative;
+    background-color: rgb(49, 36, 30);
+    width: 100px;
+    height: auto;
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows: 80px 30px;
+    justify-items: stretch;
+    align-items: stretch;
+    padding: 10px;
+    border-radius: 10px;
+    margin-top: 20px;
+    overflow: visible;
+}
+.deco-item img {
+    width: 80px;
+    aspect-ratio: 1;
+    grid-row: 1;
+    grid-column: 1;
+}
+
+.progress-bar {
+    grid-row: 2;
+    grid-column: 1;
+    position: relative;
+    --percent: 75%;
+    overflow: hidden;
+    background: rgb(57, 51, 41);
+    color: black;
+    border-radius: 4px;
+}
+.progress-bar::before {
+    content:"";
+    display:block;
+    height: 100%;
+    width: var(--percent);
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: rgb(0, 60, 255);
+}
+.progress-bar span {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: inline-block;
+    text-align: center;
+}
+
+.place-deco-btn {
+    grid-row: 2;
+    grid-column: 1;
+    background-color: green;
+    padding: 5px;
+    position: relative;
+    text-align: center;
+    border-radius: 4px;
+
+}
+
+.deco-tooltip {
+    width: 100%;
+    grid-row: 1;
+    grid-column: 1;
+    padding: 10px;
+    background: rgb(49, 36, 30);
+    display: none;
+    z-index: 3;
+}
+
+.deco-item:hover .deco-tooltip {
+    display: block;
 }

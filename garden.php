@@ -8,19 +8,20 @@
     <script src="./game.js"></script>
     <script>
         <?php
-            $ch = $_REQUEST["gamechoice"];
             $gamename = $_REQUEST["gamename"];
-            
             $pdo = new PDO('mysql:host=localhost;dbname=sqlgarden', 'root', '');
+            
+            $pdostmt = $pdo->prepare('SELECT * from games WHERE name = ?');
+            $pdostmt->execute(array($gamename));
+            $gamestateArr = $pdostmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($_REQUEST["gamechoice"] == "new-game") {
-                $pdostmt = $pdo->prepare('INSERT INTO games (name, money, elapsedweeks) VALUES (:name, 0, 0)');
-                $pdostmt->execute(array('name'=>$gamename));
+            if (!$gamestateArr) {
+                header("Location: index.php");
+                exit();
             }
 
             $shopArrs = array();
         ?>
-
         const STATIC_DATA = {
             decos:
                 <?php
@@ -31,18 +32,18 @@
 
             tools:
                 <?php
-                    $pdostmt = $pdo->query('SELECT * from tools');
+                    $pdostmt = $pdo->query('SELECT * from tools ORDER BY tools.sort ASC');
                     $toolsArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
                     $shopArrs["tools"] = $toolsArr;
                     echo json_encode($toolsArr);
                 ?>,
 
-            boosters:
+            boosts:
                 <?php
-                    $pdostmt = $pdo->query('SELECT * from boosters ORDER BY boosters.price ASC');
-                    $boostersArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
-                    $shopArrs["boosters"] = $boostersArr;
-                    echo json_encode($boostersArr);
+                    $pdostmt = $pdo->query('SELECT * from boosts ORDER BY boosts.price ASC');
+                    $boostsArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
+                    $shopArrs["boosts"] = $boostsArr;
+                    echo json_encode($boostsArr);
                 ?>,
 
             flowers:
@@ -61,41 +62,25 @@
                     echo json_encode($buildingsArr);
                 ?>,            
         }
-        
-        //Object.keys(gamestates).forEach(key=>{gamestates[key] = parseInt(gamestates[key])})
-        let game_data = {
-            shelf:
-                <?php
-                    $pdostmt = $pdo->prepare('SELECT * from shelf WHERE gamename = ?');
-                    $pdostmt->execute(array($gamename));
-                    $shelfArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
-                    echo json_encode($shelfArr);
-                ?>,
 
+        
+        let game_data = {
             tiles:
                 <?php
                     $pdostmt = $pdo->prepare('SELECT * from tiles WHERE gamename = ?');
                     $pdostmt->execute(array($gamename));
                     $tilesArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
-                    $tilesArr = array_map(function($tile) {$tile["boosters"] = json_decode($tile["boosters"]); return $tile;}, $tilesArr);
+
+                    $tilesArr = array_map(function($tile) {$tile["boosts"] = json_decode($tile["boosts"]);
+                                                           $tile["buildings"] = json_decode($tile["buildings"]);
+                                                           $tile["infections"] = json_decode($tile["infections"]); return $tile;}, $tilesArr);
                     echo json_encode($tilesArr);
                 ?>,
 
-            builts:
-                <?php
-                    $pdostmt = $pdo->prepare('SELECT * from builts WHERE gamename = ?');
-                    $pdostmt->execute(array($gamename));
-                    $builtArr = $pdostmt->fetchAll(PDO::FETCH_ASSOC);
-                    echo json_encode($builtArr);
-                ?>,
-
-            ...<?php
-                $pdostmt = $pdo->prepare('SELECT * from games WHERE name = ?');
-                $pdostmt->execute(array($gamename));
-                $gamestateArr = $pdostmt->fetch(PDO::FETCH_ASSOC);
-
+            ...<?php                
                 $gamestateArr["money"] = intval($gamestateArr["money"]);
                 $gamestateArr["elapsedweeks"] = intval($gamestateArr["elapsedweeks"]);
+                $gamestateArr["shelf"] = json_decode($gamestateArr["shelf"]);
                 echo json_encode($gamestateArr);
             ?>
         }
@@ -107,15 +92,16 @@
         <div id="money-display"><span style="font-size:0.7em;"></span> 50</div>
         <div id="shelf">
             <?php
-            foreach ($flowersArr as $item) {
-                $name = $item["name"];
-                $desc = $item["description"];
-                $price = $item["price"];
-                echo("<div class='shelf-item hidden' id='shelf-$name'> // todo
-                <img class='shelf-flower-img item-img' id='shelf-$name-img' src='./images/items/$name.png'>
+            foreach ($gamestateArr["shelf"] as $name => $amount) {
+                $hidden = "hidden";
+                if ($amount) {
+                    $hidden = "";
+                }
+                echo("<div class='shelf-item $hidden'>
+                <img class='shelf-item-img item-img' src='./images/items/$name.png'>
                 <div class='item-title'>$name</div>
-                <div class='item-desc'>$desc</div>
-                <div class='action-btn'>$price</div>
+                <div class='shelf-item-amount'>$amount</div>
+                <div class='action-btn' data-action='flower-$name-seed-shelf'></div>
                 </div>");
             }
             ?>
@@ -126,73 +112,97 @@
         <div id="decos-hider">
             <div id="decos">
                 <span id="decos-title">🎖️   AWARDS</span>
-                
+                <?php
+                    foreach ($decosArr as $deco) {
+                        $name = $deco["name"];
+                        $task = $deco["task"];
+                        $effect = $deco["effect"];
+                        echo("
+                        <div id='deco-$name' class='deco-item'>
+                            <img src='./images/items/$name.png'>
+                            <div class='progress-bar'><span>75/100</span></div>
+                            <div class='place-deco-btn action-btn hidden' data-action='deco-$name'>PLACE</div>
+                            
+                            <div class='deco-tooltip'>
+                                
+                                <div class='deco-tooltip-name'>$name</div>
+                                <div class='deco-tooltip-task'>$task</div>
+                                <div class='deco-tooltip-effect'>$effect</div>
+                            </div>
+                        </div>
+                        ");                        
+                         // todo where to build deco (find current rank) js
+                    }
+                ?>
+
             </div>
         </div>
     </div>
-    <div id="expand">👷‍♀️ EXPAND GARDEN</div>
+    <div id="expand" data-action="expand" class="hover-icon action-btn">👷‍♀️ EXPAND GARDEN</div>
    
     
     <div id="canvas-container">
-        <canvas id="backdrop-cvs" class="prerendered-cvs"></canvas>
-        <canvas id="flowers-cvs" class="prerendered-cvs"></canvas>
-        <canvas id="highlight-cvs" class="prerendered-cvs"></canvas>
-        <canvas id="animate-cvs"></canvas>
+        <canvas id="backdrop-cvs" class="display-cvs"></canvas>
+        <canvas id="flower-cvs" class="display-cvs"></canvas>
+        <canvas id="highlight-cvs" class="display-cvs"></canvas>
+        <canvas id="animate-cvs" class="display-cvs"></canvas>
         <canvas id="ui-cvs"></canvas>
-        <div id="tile-info"></div>
     </div>
 
     <div id="shop-info" class="hidden"></div>
 
 	<div id="shop">
         <div id="nav-bar">
-            <input id="tools-radio" type="radio" name="nav" value="tools"checked>
-            <label for="tools" class="nav-label">TOOLS</label>
-            <input id="boosters-radio" type="radio" name="nav" value="boosters">
-            <label for="boosters" class="nav-label">BOOSTERS</label>
-            <input id="flowers-radio" type="radio" name="nav" value="flowers">
-            <label for="flowers" class="nav-label">FLOWERS</label>
-            <input id="buildings-radio" type="radio" name="nav" value="buildings">
-            <label for="buildings" class="nav-label">BUILDINGS</label>
+            <input id="tool-radio" type="radio" name="nav" value="tool"checked>
+            <label for="tool" class="nav-label">TOOLS</label>
+            <input id="boost-radio" type="radio" name="nav" value="boost">
+            <label for="boost" class="nav-label">BOOSTS</label>
+            <input id="flower-radio" type="radio" name="nav" value="flower">
+            <label for="flower" class="nav-label">FLOWERS</label>
+            <input id="building-radio" type="radio" name="nav" value="building">
+            <label for="building" class="nav-label">BUILDINGS</label>
         </div>
-        <div id="tools-header" class="shop-header">TOOLS</div>
+        <div id="tool-header" class="shop-header">TOOLS</div>
         <?php
             foreach ($shopArrs["tools"] as $tool) {
-                echo(
-                    "<div class='tool-shop-item' id='tools-{$tool["name"]}'>
-                    <img class='action-btn hover-content' src='./images/items/{$tool["name"]}.png'>
-                    </div>"
-                );
+                $name = $tool["name"];
+                $spadedig = ($name == "spade") ? "-dig" : "";
+                echo("
+                    <img class='action-btn tool-item' id='tool-$name' data-action='tool-$name$spadedig' src='./images/items/$name.png'>
+                ");
             }
 
-            $shopSections = array("boosters", "flowers", "buildings");
-            $emos = array("boosters"=>"✨", "flowers"=>"🌰", "buildings"=>"⚙️");
+            $shopSections = array("boost", "flower", "building");
+            $emos = array("boost"=>"✨", "flower"=>"🌰", "building"=>"⚙️");
             foreach ($shopSections as $section) {
-                echo('<div id="'.$section.'-header" class="shop-header">'.strtoupper($section).'</div>');
+                echo('<div id="'.$section.'-header" class="shop-header">'.strtoupper($section).'S</div>');
                 $emo = $emos[$section];
-                foreach ($shopArrs[$section] as $item) {
+                foreach ($shopArrs[$section."s"] as $item) {
                     $name = $item["name"];
                     $desc = $item["description"];
                     $price = "<span>$emo {$item['price']} $</span>";
-                    if ($section == "flowers") {
+                    if ($section == "flower") {
                         $plantprice = $item['price']*3;
                         $price .= "<span>🌱 $plantprice $</span>";
                     }
 
-                    echo("<div class='shop-item $section-item' id='$section-$name'>
-                            <img class='shop-img item-img hover-icon' src='./images/items/$name.png'>
-                            <div class='item-content hover-content'>
+                    echo("<div class='shop-item $section-item'>
+                            <img class='shop-img item-img hover-icon' data-action='$section-$name' src='./images/items/$name.png'>
+                            <div class='item-content hover-content' data-action='$section-$name'>
                                 <div class='item-title'>$name</div>
                                 <div class='item-price'>$price</div>
+                                <div id='$section-$name-info' class='item-info hidden'>
+                                    insert info here
+                                </div>
                             </div>
                             <div class='item-buttons'>");
-                        if ($section == "flowers") {
-                                echo("<div class='buy-btn action-btn' data-price='{$item['price']}'>SEED</div>
-                                <div class='buy-btn action-btn' data-price='$plantprice'>PLANT</div>");
-                        } else if ($section == "boosters"){
-                                echo("<div class='buy-btn action-btn' data-price='{$item['price']}'>APPLY</div>");
-                        } else {
-                            echo("<div class='buy-btn action-btn' data-price='{$item['price']}'>BUILD</div>");
+                        if ($section == "flower") {
+                                echo("<div class='buy-btn action-btn' data-action='flower-$name-seed' data-price='{$item['price']}'>SEED</div>
+                                <div class='buy-btn action-btn' data-action='flower-$name-plant' data-price='$plantprice'>PLANT</div>");
+                        } else if ($section == "boost"){
+                                echo("<div class='buy-btn action-btn' data-action='boost-$name' data-price='{$item['price']}'>APPLY</div>");
+                        } else if ($section == "building") {
+                            echo("<div class='buy-btn action-btn' data-action='building-$name' data-price='{$item['price']}'>BUILD</div>");
                         }
                         
                     echo("</div></div>");
@@ -224,5 +234,9 @@
             }
         ?>
     </div>
+    <div id="popup-overlay"  class="hidden" onclick="event.currentTarget.classList.add('hidden')">
+            <div id="cvs-popup">
+            </div>
+        </div>
 </body>
 </html>

@@ -14,7 +14,8 @@ class View {
         this.getCanvasCtxList()
         this.updateCvsSize();
         this.updateTiles();
-        this.updateMapDims();        
+        this.updateMapDims();
+        this.updateTrans("display");    
     }
 
     backdrop_render_cvs = document.createElement("canvas");
@@ -29,13 +30,10 @@ class View {
     active_hl_render_cvs = document.createElement("canvas");
     active_hl_render_ctx = this.active_hl_render_cvs.getContext("2d");
 
-    animate_cvs = document.getElementById("animate-cvs");
-    animate_ctx = this.animate_cvs.getContext("2d");
-
     canvas_cont = document.getElementById("canvas-container");
-    cvs_res = 4; //canvas pixel per style pixel
+    cvs_res = 4; //canvas pixel per style pixel // todo allow different settings (correct clearrect for animations)
     map_frame = [];
-    tile_frame = undefined;
+    tile_frame = [0,0,0,0];
     cvs_width = 0;
     cvs_height = 0;
     tile_rows = 0;
@@ -63,31 +61,14 @@ class View {
     col_spc = 3/2 * this.tile_size;
     
 
-    gatherImages() {  // todo execute initial draw, solve unexistent highlight-white
+    gatherImages() {
         for (let image of document.getElementsByClassName("img")) {
             this.images[image.id] = image;
         }
-        /*
-        for (let flower of this.ctrl.data.stat.flowers) {
-            this.images[flower.name] = new Image();
-            this.images[flower.name].src = "images/items/"+flower.name+".png";
-            //TODO make canvas resolution user adjustable
-        }
-        for (let type of ["bushes", "earth"]) {
-            for (let season of this.seasons) {
-                this.images[type+"-"+season] = new Image();
-                this.images[type+"-"+season].src = "images/tiles/"+type+"-"+season+".png";
-            }
-        }
-        this.images["card"] = new Image();
-        this.images["card"].src = "images/items/card.png";
-        this.images["highlight-white"] = new Image();
-        this.images["highlight-white"].src = "images/tiles/highlight-white.png";
-        */
     }
 
     getCanvasCtxList() {
-        this.cvs_list = document.getElementsByClassName("prerendered-cvs");
+        this.cvs_list = document.getElementsByClassName("display-cvs");
         for (let cvs of this.cvs_list) {
             let ctx = cvs.getContext("2d");
             ctx.imageSmoothingEnabled = false;
@@ -95,17 +76,17 @@ class View {
         }
     }
 
-    updateCvsSize() {  // always followed by this.updateMapDims();
+    updateCvsSize() {  // always followed by this.updateTiles() OR this.updateMapDims();
         const cont_style = window.getComputedStyle(this.canvas_cont);
         this.cvs_width = parseInt(parseFloat(cont_style.width) * this.cvs_res);
         this.cvs_height = parseInt(parseFloat(cont_style.height) * this.cvs_res);
         for (var cvs of this.cvs_list) {
             cvs.width = this.cvs_width;
             cvs.height = this.cvs_height;
-        }
-        this.applyTransform();
+        } // todo ???
+        this.updateMapDims();
     }
-    updateTiles() {  // always followed by this.updateMapDims();
+    updateTiles() {
         this.tile_frame = [Infinity, Infinity, -Infinity, -Infinity]; //todo: for that, every map needs to have at least one tile (center magic stone or sth)
         for (let tile of this.ctrl.data.game.tiles) {
             // axial coords to double-height coords
@@ -117,6 +98,10 @@ class View {
             if (col > this.tile_frame[2]) {this.tile_frame[2] = col;}
             if (row > this.tile_frame[3]) {this.tile_frame[3] = row;}
         }
+        
+        this.ctrl.computeExpandableTiles();
+        this.ctrl.buildAllBuildableTiles();
+        this.updateMapDims()
     }
     
     updateMapDims() {
@@ -159,7 +144,9 @@ class View {
             cvs.height = this.map_height;
             cvs.width = this.map_width;
         }
-        this.applyMapTransform();
+        this.computeMapTransform();
+        this.updateTrans("render");
+        this.updateTrans("animate");
         this.renderBackdrop();
         this.renderFlower();
         this.renderHighlight(this.ctrl.action, this.active_hl_render_ctx);
@@ -167,28 +154,75 @@ class View {
         this.fullDraw();
     }
 
-    applyMapTransform() {
-        for (let ctx of [this.backdrop_render_ctx, this.flower_render_ctx, this.hover_hl_render_ctx, this.active_hl_render_ctx]) {
-            ctx.resetTransform();
-            // translate ctx when tiles are asymmetrical so that they can be drawn with their original qr
-            // move origin to center of canvas, move so that tile_frame fits and apply resolution
-            ctx.translate(ctx.canvas.width/2, ctx.canvas.height/2);
-            this.map_trans_x = -(this.tile_frame[0]+this.tile_frame[2])/2 * this.col_spc * this.cvs_res;
-            this.map_trans_y = -(this.tile_frame[1]+this.tile_frame[3])/2 * this.row_spc * this.cvs_res;
-            ctx.translate(this.map_trans_x, this.map_trans_y);
-            ctx.scale(this.cvs_res, this.cvs_res);
+    computeMapTransform() {
+        this.map_trans_x = -(this.tile_frame[0]+this.tile_frame[2])/2 * this.col_spc * this.cvs_res;
+        this.map_trans_y = -(this.tile_frame[1]+this.tile_frame[3])/2 * this.row_spc * this.cvs_res;
+    }
+    applyScale(x, y, d) {
+        let factor = Math.pow(1.001, d);
+        let old_scale = this.trans_scale;
+        this.trans_scale = Math.max(0.1 * this.cvs_res, Math.min(factor * this.trans_scale, 5 * this.cvs_res));
+        if (this.trans_scale != old_scale) {
+            this.trans_x += (x-this.cvs_width/2 - this.trans_x) * (1-factor);
+            this.trans_y += (y-this.cvs_height/2 - this.trans_y) * (1-factor);
+            this.updateTrans("display");
+            this.updateTrans("animate");
         }
     }
-    clearRenderCtx(ctx) {
-        //ctx.clearRect(-ctx.canvas.width/2 - this.map_trans_x*this.cvs_res, -ctx.canvas.height/2 - this.map_trans_y*this.cvs_res, ctx.canvas.width, ctx.canvas.height);
-        ctx.clearRect(-ctx.canvas.width/2 - this.map_trans_x, -ctx.canvas.height/2 - this.map_trans_y, ctx.canvas.width, ctx.canvas.height);
+    applyDrag(x, y) {
+        this.trans_x += x - this.drag_from.x;
+        this.trans_y += y - this.drag_from.y;
+        this.drag_from = {x: x, y: y};
+        this.updateTrans("display");
+        this.updateTrans("animate");
     }
-    clearDisplayCtx(ctx) {
-        ctx.clearRect(-ctx.canvas.width/2/this.trans_scale - this.trans_x/this.trans_scale, -ctx.canvas.height/2/this.trans_scale - this.trans_y/this.trans_scale, ctx.canvas.width/this.trans_scale, ctx.canvas.height/this.trans_scale);
+
+    updateTrans(type) {        
+        switch (type) {
+            case "render":
+                for (let ctx of [this.backdrop_render_ctx, this.flower_render_ctx, this.hover_hl_render_ctx, this.active_hl_render_ctx]) {
+                    ctx.resetTransform();
+                    ctx.translate(ctx.canvas.width/2, ctx.canvas.height/2);
+                    ctx.translate(this.map_trans_x, this.map_trans_y);
+                    ctx.scale(this.cvs_res, this.cvs_res);
+                }
+                this.renderBackdrop();
+                this.renderFlower();
+                this.renderHighlight(this.ctrl.action, this.active_hl_render_ctx);
+                this.renderHighlight(this.ctrl.icon_hover_action, this.hover_hl_render_ctx);
+                break;
+            case "display":
+                for (let ctx of this.ctx_list.slice(0, 3)) {
+                    ctx.resetTransform();
+                    ctx.translate(ctx.canvas.width/2, ctx.canvas.height/2);
+                    ctx.translate(this.trans_x, this.trans_y);
+                    ctx.scale(this.trans_scale, this.trans_scale);
+                }
+                this.displayRenderedMap(this.ctx_list[0], this.backdrop_render_cvs);
+                this.displayRenderedMap(this.ctx_list[1], this.flower_render_cvs);
+                this.displayRenderedMap(this.ctx_list[2], (this.ctrl.icon_hover_action)? this.hover_hl_render_cvs : this.active_hl_render_cvs);
+         // todo make to display rendered map
+                break;
+            case "animate":
+                let ctx = this.ctx_list[3];
+                ctx.resetTransform();
+                ctx.translate(ctx.canvas.width/2, ctx.canvas.height/2);
+                ctx.translate(this.trans_x, this.trans_y);
+                ctx.scale(this.trans_scale, this.trans_scale);
+                ctx.translate(this.map_trans_x, this.map_trans_y);
+                ctx.scale(this.cvs_res, this.cvs_res);
+                break;
+        }
     }
-    
-    drawRenderedLayer(ctx, map_image) {
-        this.clearDisplayCtx(ctx);
+
+    clearCtx(ctx) {
+        ctx.save();
+        ctx.resetTransform();
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.restore();
+    }
+    displayRenderedMap(ctx, map_image) {
+        this.clearCtx(ctx);
         ctx.drawImage(map_image, -map_image.width/2, -map_image.height/2, map_image.width, map_image.height);
     }
     
@@ -215,77 +249,79 @@ class View {
             earth_tiles.push({image_name: "earth-summer", q: tile.q, r: tile.r});
         }
         this.drawTiles(this.backdrop_render_ctx, earth_tiles);
-        
     }
 
     renderFlower() {
         let flower_tiles = [];
-        this.clearRenderCtx(this.flower_render_ctx);
-        
+        this.clearCtx(this.flower_render_ctx);
         
         for (let tile of this.ctrl.data.game.tiles) {
             if (tile.flowername) {
-                if (true||tile.germed) { // todo find way to handle germination
+                if (true||tile.germed) { // todo find way to handle germination -> age + germtime
                     flower_tiles.push({image_name: tile.flowername, q: tile.q, r: tile.r, opacity: 1});
                 } else {
                     flower_tiles.push({image_name: "card", q: tile.q, r: tile.r});
                 }
+            } else if (tile.deconame) {
+                flower_tiles.push({image_name: tile.deconame, q: tile.q, r: tile.r, opacity: 1});
             }
         }
-        this.drawTiles(this.flower_render_ctx, flower_tiles, 0.7); // todo fix hover highlighting
+        this.drawTiles(this.flower_render_ctx, flower_tiles, 0.7, true); // todo fix hover highlighting
     }
 
-    renderHighlight(action, ctx) {// render highlights on every game update when auto-reducing booster is hovered
-        this.clearRenderCtx(ctx);
+    renderHighlight(action=this.ctrl.action, ctx=this.active_hl_render_ctx) {// render highlights on every game update when auto-reducing boost is hovered
+        this.clearCtx(ctx);
         let highlight_tiles = [];
-        
-        let opacity = 0.7;
+        let opacity = 0.5;
+        let scale = 1;
         if (action) {
-            action = action.split("-");
-            if (action[0] == "boosters") {
+            if (action[0] == "boost") {
                 for (let tile of this.ctrl.data.game.tiles) {
-                    highlight_tiles.push({image_name: "highlight-white", q: tile.q, r: tile.r, opacity: (tile.boosters[action[1]]??0)/100*opacity}); // all boosters go 0-100 0.7 for  // todo: make boosters: {"water": 45, "fertilizer": 3, ...}
+                    highlight_tiles.push({image_name: "highlight-white", q: tile.q, r: tile.r, opacity: (tile.boosts[action[1]]??0)/100*opacity}); // all boosts go 0-100 0.7 for  // todo: make boosts: {"water": 45, "fertilizer": 3, ...}
                 }
-            }  else if (action[0] == "buildings") { // todo find way to handle buildings (per tile->repair is hard/ spanning multiple tiles->hover-highlight is hard)
+            }  else if (action[0] == "building") { // todo find way to handle buildings (per tile->repair is hard/ spanning multiple tiles->hover-highlight is hard)
+                scale = 3;
                 // with multiple allow building on top?
                 for (let tile of this.ctrl.data.game.tiles) {
                     if (tile.buildings.hasOwnProperty(action[1])) {
-                        highlight_tiles.push({image_name: this.highlight_action || "highlight-white", q: tile.q, r: tile.r, opacity: opacity}); // todo: make buildings: {"sprinkler": {"weeksleft": 78, "amount": 4}, "slugfleece": {"weeksleft": 50}, ...}
+                        highlight_tiles.push({image_name: "building-hl-white", q: tile.q, r: tile.r, opacity: opacity}); // todo: make buildings: {"sprinkler": {"weeksleft": 78, "amount": 4}, "slugfleece": {"weeksleft": 50}, ...}
                     }
                 }
-            } else if (action[0] == "flowers") {
+            } else if (action[0] == "flower") {
                 for (let tile of this.ctrl.data.game.tiles) {
                     if (tile.flowername == action[1]) {
                         highlight_tiles.push({image_name: "highlight-white", q: tile.q, r: tile.r, opacity: opacity});
                     }
                 }
-            } else if (action[0] == "expand") { // 
-                // todo make expandable tiles list when updating tiles (updateTiles)
-                for (let tile of this.ctrl.data.game.tiles) {
-                    if (expand_tiles.some(exp_tile=>tile.q == exp_tile.q && tile.r == exp_tile.r)) {
-                        highlight_tiles.push({image_name: "highlight-white", q: tile.q, r: tile.r, opacity: opacity});
-                    }
+            } else if (action[0] == "expand") {
+                // todo make expandable_tiles list when updating tiles (updateTiles)
+                for (let tile of this.ctrl.expandable_tiles) {
+                    highlight_tiles.push({image_name: "highlight-white", q: tile.q, r: tile.r, opacity: opacity});
                 }
 
             }
-            this.drawTiles(ctx, highlight_tiles);
+            this.drawTiles(ctx, highlight_tiles, scale);
         }
     }
 
-    drawTiles(ctx, tiles, tile_scale=1) { // tiles: [{image_name: , q: , r: (, opacity: )}, ...]
+    drawTiles(ctx, tiles, tile_scale=1, square=false) { // tiles: [{image_name: , q: , r: (, opacity: )}, ...]
         // transform so that originally tile center coords can be used as top-left corner coords
         ctx.translate(-this.tile_width*tile_scale/2, -this.tile_height*tile_scale/2);
         for (let tile of tiles) {
             if (tile.opacity !== undefined) {
                 ctx.globalAlpha = tile.opacity;
             }
-            ctx.drawImage(this.images[tile.image_name],
-                    this.tile_size * (          3./2 * tile.q                          ),
+            let img = this.images[tile.image_name]
+            let height = this.tile_height*tile_scale;
+            let width = (square)? height : this.tile_width*tile_scale;
+            let left = (square)? (this.tile_width*tile_scale - width) /2: 0;
+            ctx.drawImage(img,
+                    this.tile_size * (          3./2 * tile.q                          ) + left,
                     this.tile_size * (Math.sqrt(3)/2 * tile.q  +  Math.sqrt(3) * tile.r),
-                    this.tile_width*tile_scale, this.tile_height*tile_scale);
+                    //this.tile_width*tile_scale, this.tile_height*tile_scale);
+                    width, height);
+                    //img.width*tile_scale, img.height*tile_scale);
         }
-        ctx.fillStyle = "red";
-        ctx.fillRect(0, 0, 10, 10);
         // transform back
         ctx.translate(this.tile_width*tile_scale/2, this.tile_height*tile_scale/2);
         ctx.globalAlpha = 1;
@@ -315,44 +351,11 @@ class View {
         }
     }
 */
-    applyScale(x, y, d) {
-        let factor = Math.pow(1.001, d);
-        let old_scale = this.trans_scale;
-        this.trans_scale = Math.max(0.1 * this.cvs_res, Math.min(factor * this.trans_scale, 5 * this.cvs_res));
-        if (this.trans_scale != old_scale) {
-            this.trans_x += (x-this.cvs_width/2 - this.trans_x) * (1-factor);
-            this.trans_y += (y-this.cvs_height/2 - this.trans_y) * (1-factor);
-            this.applyTransform();
-        }
-    }
-
-
-    applyDrag(x, y) {
-        this.trans_x += x - this.drag_from.x;
-        this.trans_y += y - this.drag_from.y;
-        this.drag_from = {x: x, y: y};
-        this.applyTransform();
-    }
-
-    applyTransform() {
-        for (let ctx of this.ctx_list) {
-            ctx.resetTransform();
-            ctx.translate(ctx.canvas.width/2, ctx.canvas.height/2);
-            ctx.translate(this.trans_x, this.trans_y);
-            ctx.scale(this.trans_scale, this.trans_scale);
-            //this.drawRenderedLayer(ctx, this.images["highlight-red"]);
-        }
-        this.fullDraw();
-    }
 
     fullDraw() {        
-        //this.drawRenderedLayer(this.ctx_list[0], this.backdrop_render_cvs);
-        
-        this.drawRenderedLayer(this.ctx_list[0], this.backdrop_render_cvs);
-        this.drawRenderedLayer(this.ctx_list[1], this.flower_render_cvs);
-        this.drawRenderedLayer(this.ctx_list[2], (this.ctrl.icon_hover_action)? this.hover_hl_render_cvs : this.active_hl_render_cvs);
-        this.ctx_list[2].fillStyle = "blue";
-        this.ctx_list[2].fillRect(0, 0, 10, 10);
+        this.displayRenderedMap(this.ctx_list[0], this.backdrop_render_cvs);
+        this.displayRenderedMap(this.ctx_list[1], this.flower_render_cvs);
+        this.displayRenderedMap(this.ctx_list[2], (this.ctrl.icon_hover_action)? this.hover_hl_render_cvs : this.active_hl_render_cvs);
         // animations redraw themselves
         
     }
@@ -360,18 +363,36 @@ class View {
     animationLoop(timestamp) {
         // draw all current animations
         
-        this.clearDisplayCtx(this.animate_ctx);
+        //this.ctx_list[3].scale(this.cvs_res, this.cvs_res);
+        this.clearCtx(this.ctx_list[3]);
+        //this.ctx_list[3].scale(1/this.cvs_res, 1/this.cvs_res);
+
         
         for (let a of this.running_animations) {
             switch (a.type) {
-                case "tile-hover":
-                    this.drawTiles(ctx, [{image_name: a.image_name, q: a.q, r: a.r, opacity: a.opacity}]);
+                case "highlight-tile":
+                    this.drawTiles(this.ctx_list[3], [{image_name: a.image_name, q: a.q, r: a.r, opacity: a.opacity}], a.scale);
                     break;
             }
-        }    
+        }
         window.requestAnimationFrame(this.animationLoop.bind(this));
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class Data {
     constructor(data, parent) {
@@ -389,15 +410,20 @@ class Data {
         this.ctrl.next_update_time += this.ctrl.ms_per_week;
         this.updateDatabase("games", [{name: this.game.name, money: this.game.money, elapsedweeks: this.game.elapsedweeks, shelf: this.game.shelf}]);
     }
-    changeFlowerInShelf(flower_name, amount) {
+    changeInfections(tile, infection_name, state) {
+        tile.infections[infection_name] = state;
+        this.updateDatabase("tiles", [tile]);
+    }
+    changeSeedsInShelf(flower_name, amount) {
         this.game.shelf[flower_name] += amount;
         this.updateDatabase("games", [{name: this.game.name, money: this.game.money, elapsedweeks: this.game.elapsedweeks, shelf: this.game.shelf}]);
     }
     createTileAtQR(q,r) {
         if (!this.game.tiles.some(tile=>tile.q == q && tile.r == r)) {
             // create new tile with random prequisites
-            let boosters_init = {water: Math.floor((Math.random() * 40) + 21), fertilizer: 0, compost: Math.floor((Math.random() * 40) + 21), manure: 0, mulch: Math.floor((Math.random() * 40) + 21), slugkiller: 0, bugkiler: 0};
-            let tile = {q: q, r: r, gamename: undefined, flowername: undefined, boosters: boosters_init, age: undefined};
+            let boosts_init = {water: Math.floor((Math.random() * 40) + 21), fertilizer: 0, compost: Math.floor((Math.random() * 40) + 21), manure: 0, mulch: Math.floor((Math.random() * 40) + 21), slugkiller: 0, bugkiler: 0};
+            let tile = {q: q, r: r, gamename: this.game.name, flowername: null, deconame: null, decorank: 0, boosts: boosts_init, buildings: {}, infections: {}, age: 0};
+            this.game.tiles.push(tile);
             this.updateDatabase("tiles", [tile], "ins");
         } else {
             console.warn("Attempting to create existing tile.");
@@ -406,9 +432,10 @@ class Data {
     delTile(tile) {
         this.updateDatabase("tiles", [tile], "del");
     }
-    addFlowerToTile(flower_name, tile) {
+    addFlowerToTile(flower_name, tile, mode) { // seed "seed"/"plant"
         if (!tile.flowername) {
             tile.flowername = flower_name;
+            tile.age = (mode=="seed")? 0 : this.stat.flowers.find(flower=>flower.name==flower_name).germtime; // todo germtime or functiondependent?
             this.updateDatabase("tiles", [tile]);
         } else {
             console.warn("Attempting to overwrite flower with new flower.");
@@ -416,7 +443,7 @@ class Data {
     }
     removeFlowerFromTile(tile) {
         if (tile.flowername) {
-            tile.flowername = undefined;
+            tile.flowername = null;
             this.updateDatabase("tiles", [tile]);
         } else {
             console.warn("Attempting to remove undefined flower");
@@ -432,29 +459,36 @@ class Data {
     }
     removeDecoFromTile(tile) {
         if (tile.deconame) {
-            tile.deconame = undefined;
+            tile.deconame = null;
             this.updateDatabase("tiles", [tile]);
         } else {
             console.warn("Attempting to remove undefined deco");
         }
     }
-    applyBoosterOnTile(booster_name, tile) {
-        tile.boosters[booster_name] = Math.min(tile.boosters[booster_name]+1, 100);
+    applyBoostOnTile(boost_name, tile) {
+        tile.boosts[boost_name] = Math.min(tile.boosts[boost_name]+1, 100);
         this.updateDatabase("tiles", [tile]);
     }
     addBuildingToTile(building_name, tile, intensity) {
-        tile.buildings[building_name] = {weeksleft: this.stat.buildings[building_name].weeks, intensity: intensity};
+        tile.buildings[building_name] = {weeksleft: this.stat.buildings.find(building=>building.name == building_name).weeks, intensity: intensity};
         this.updateDatabase("tiles", [tile]);
-    }
+        this.ctrl.building_tiles[building_name].push(tile);
+        this.ctrl.getBuildingBuildableTiles(building_name);
+        }
     repairBuildingOnTile(building_name, tile) {
-        tile.buildings[building_name].weeksleft = this.stat.buildings[building_name].weeks;
+        tile.buildings[building_name].weeksleft = this.stat.buildings.find(building=>building.name == building_name).weeks;
         this.updateDatabase("tiles", [tile]);
     }
     changeBuildingIntensity(building_name, tile, intensity) {
         tile.buildings[building_name].intensity = intensity;
         this.updateDatabase("tiles", [tile]);
     }
-
+    deleteBuildingFromTile(building_name, tile) {
+        delete tile.buildings[building_name];
+        this.updateDatabase("tiles", [tile]);
+        this.ctrl.building_tiles[building_name].splice(this.ctrl.building_tiles[building_name].indexOf(tile), 0);
+        this.ctrl.getBuildingBuildableTiles(building_name);
+    }
 
     weeklyUpdate() {
         // apply update logic
@@ -462,9 +496,6 @@ class Data {
         this.updateDatabase("tiles", this.game.tiles);
         this.incWeek();
     }
-
-
-
 
     updateDatabase(table_name, rows=[], action="upd") { // upd/ins/del
         fetch('/sqlgarden/update.php', {
@@ -479,14 +510,39 @@ class Data {
             }
         )
         .then(response => response.json())
-        .then(responseData => {});
+        .then(responseData => {console.log(responseData)});
     }
 
 }
 
+
+
+
+
+
+
+
+
+class Logic {
+    constructor(data, parent) {
+        this.data = data;
+        this.ctrl = parent;
+    }
+    getValue(tile) {
+        return this.data.stat.flowers.find(flower=>flower.name==tile.flowername).price*2; // todo
+    }
+}
+
+
+
+
+
+
+
+
 class Control {
     
-    action = "lens";
+    action = ["tool","lens"];
     hovered_tile = undefined;
     season = 1;
     shop_info = document.getElementById("shop-info");
@@ -497,15 +553,19 @@ class Control {
     action_btns = Array.from(document.getElementsByClassName("action-btn"));
     nav_labels = Array.from(document.getElementsByClassName("nav-label"));
     skip_btns = Array.from(document.getElementsByClassName("skip-btn"));
-    ms_per_week = 2000;
+    ms_per_week = 20000;
     weeks_per_year = 52;
+    seeding_tiles = [];
     
     prev_timestamp = 0;
 
     constructor(data) {
+        this.initInfos();
         this.next_update_time = this.ms_per_week;
         this.data = new Data(data, this);
-        this.updateMoney(0);
+        this.changeMoney(0);
+        this.logic = new Logic(this.data, this);
+        this.buildBuildingTiles();
         this.view = new View(this);
         this.marker = document.getElementById("season-marker");
         this.marker.style.transitionDuration = this.ms_per_week/1000+"s";
@@ -517,7 +577,8 @@ class Control {
         this.shop.addEventListener("scroll", this.alterRadios.bind(this));
         this.ui_cvs.addEventListener("mousedown", this.handleMouseDown.bind(this));
         this.ui_cvs.addEventListener("mousemove", this.handleMouseMove.bind(this));
-        this.ui_cvs.addEventListener("click", this.handleMouseClick.bind(this));
+        this.ui_cvs.addEventListener("mouseleave", this.handleMouseLeave.bind(this));
+        this.ui_cvs.addEventListener("mouseup", this.handleMouseUp.bind(this));
         this.ui_cvs.addEventListener("wheel", this.handleMouseWheel.bind(this));
         this.hover_icons.forEach(item => {item.addEventListener("mouseenter", this.iconHover.bind(this))});
         this.hover_icons.forEach(item => {item.addEventListener("mouseleave", this.iconHover.bind(this))});
@@ -529,7 +590,7 @@ class Control {
         document.body.onkeyup = (evt) => {
             if (evt.key === "Escape") {
                 // change current action to lens
-                document.getElementById("tools-lens").dispatchEvent("click");
+                document.getElementById("tool-lens").dispatchEvent(new Event('click'));
             }
         }
     }
@@ -540,7 +601,15 @@ class Control {
         // todo init progress
     }
 
-    updateMoney(amount) {
+    initInfos() {
+        let infos = document.getElementsByClassName("item-info");
+        this.item_infos = {};
+        for (let info of infos) {
+            this.item_infos[info.id] = info;
+        }
+    }
+
+    changeMoney(amount) {
         this.data.changeMoney(amount);
         document.getElementById("money-display").innerHTML = this.data.game.money;
         // update state of shop items
@@ -553,21 +622,109 @@ class Control {
                 i.classList.remove("affordable");
             }
         }
+        let action = this.action;
+        if (["boost", "flower", "building"].indexOf(this.action[0])>-1) { // todo find solution for out of money deactivation but still repair or see building state/set intensity
+            if (this.data.game.money < this.data.stat[action[0]+"s"].find(boost=>boost.name == action[1]).price) { //todo repair buildings how?
+                // change current action to lens
+                document.getElementById("tool-lens").dispatchEvent(new Event('click'));
+            }
+        }
     }
 
-    handleMouseClick(evt) {
-        if (this.view.drag_from) {
-            this.view.drag_from = undefined;
+    // ACTION HANDLERS
+    
+    actionAddFlower() {
+        this.data.addFlowerToTile(this.action[1], this.hovered_tile, this.action[2]);
+        let plant_factor = (this.action[2]=="plant")? 3 : 1;
+        this.changeMoney(-this.data.stat.flowers.find(flower=>flower.name==this.action[1]).price * plant_factor);
+        this.checkActionValid(this.hovered_tile.q, this.hovered_tile.r);
+        this.view.renderFlower();
+        this.view.displayRenderedMap(this.view.ctx_list[1], this.view.flower_render_cvs);
+        this.view.renderHighlight(this.action);
+        this.view.displayRenderedMap(this.view.ctx_list[2], this.view.active_hl_render_cvs);
+    }
+    actionAddBuilding() {
+        this.data.addBuildingToTile(this.action[1], this.hovered_tile, this.data.stat.buildings.find(building=>building.name == this.action[1]).stdintensity);
+        this.changeMoney(-this.data.stat.buildings.find(building=>building.name==this.action[1]).price);
+        this.checkActionValid(this.hovered_tile.q, this.hovered_tile.r);
+        this.view.renderHighlight(this.action);
+        this.view.displayRenderedMap(this.view.ctx_list[2], this.view.active_hl_render_cvs);
+    
+    }
+    actionApplyBoost() {
+        this.data.applyBoostOnTile(this.action[1], this.hovered_tile);
+        this.changeMoney(-this.data.stat.boosts.find(boost=>boost.name==this.action[1]).price);
+        this.view.renderHighlight(this.action);
+        this.view.displayRenderedMap(this.view.ctx_list[2], this.view.active_hl_render_cvs);
+    }
+    actionAddDeco() {
+        this.data.addDecoToTile(this.action[1], this.hovered_tile);
+        this.checkActionValid(this.hovered_tile.q, this.hovered_tile.r);
+        this.view.renderFlower();
+        this.view.displayRenderedMap(this.view.ctx_list[1], this.view.flower_render_cvs);
+        this.view.renderHighlight(this.action);
+        this.view.displayRenderedMap(this.view.ctx_list[2], this.view.active_hl_render_cvs);
+    }
+    actionCollectSeeds() {
+        let amount = 3; // todo link to tiles seedprob or so
+        this.data.changeSeedsInShelf(this.hovered_tile.flowername, amount);
+    }
+    actionPopupInfo() {
+        // fill popup with data
+        document.getElementById("cvs-popup").parentElement.classList.remove("hidden")
+        // open popup
+    }
+    actionCutFlower() {
+        this.changeMoney(this.logic.getValue(this.hovered_tile));
+        this.data.removeFlowerFromTile(this.hovered_tile);
+        this.checkActionValid(this.hovered_tile.q, this.hovered_tile.r);
+        this.view.renderFlower();
+        this.view.displayRenderedMap(this.view.ctx_list[1], this.view.flower_render_cvs);
+    }
+    actionPopupBuilding() {
+        // fill popup with data
+        document.getElementById("cvs-popup").parentElement.classList.remove("hidden")
+        // open popup
+    }
+    actionExpandMap() {
+        this.data.createTileAtQR(this.hovered_tile.q, this.hovered_tile.r);
+        this.view.updateTiles();
+        this.checkActionValid(this.hovered_tile.q, this.hovered_tile.r);
+    }
+    actionDiscoverInfection(infection_name) { // todo include infections into highlight drawing
+        this.data.changeInfections(this.hovered_tile, infection_name, "visible");
+        // todo redraw
+    }
+
+    handleMouseUp(evt) {        
+        this.view.drag_from = undefined;
+
+        if (this.view.dragging) {
+            this.view.dragging = false;
         } else if (this.action_valid) {
-            // handle clicks on tiles regarding current action
-            switch (this.action) {
-                case "lens":
-                    // fill popup with data
-                    document.getElementById("tile-info").parentElement.classList.add("opened")
-                    // open popup
-                    break;
-                case "spade":
-                    break;
+            if (this.action[0] == "tool") {
+                if (this.action[1] == "lens") {
+                    this.actionPopupInfo();
+                } else if (this.action[1] == "sickle") {
+                    this.actionCutFlower();
+                } else if (this.action[1] == "spade") {
+                    if (this.action[2] == "dig") {
+                        this.actionDigTile();
+                    } else if (this.action[2] == "place") {
+                        this.actionPlaceDiggedFlower();
+                    }
+                }
+            } else if (this.action[0] == "boost") {
+                this.actionApplyBoost();
+            } else if (this.action[0] == "flower") {
+                
+                this.actionAddFlower();
+            } else if (this.action[0] == "building") {
+                this.actionAddBuilding();
+            } else if (this.action[0] == "deco") {
+                this.actionAddDeco();
+            } else if (this.action[0] == "expand") {
+                this.actionExpandMap();
             }
         }
     }
@@ -576,99 +733,155 @@ class Control {
 
     handleMouseDown(evt) {this.view.drag_from={x: evt.offsetX*this.view.cvs_res, y: evt.offsetY*this.view.cvs_res}}
 
-    computeActionValidCoords() { // todo clean up, structure action vocab
-        this.avc = {boost: [], flower: [], deco: [], expand: [], build: [], sickle: [], lens: [], spade: []}
-        for (let tile of this.data.game.tiles) {
-            avc["boost"].push({q:tile.q,r:tile.r})
-            if (!tile.flowername && ! tile.deconame) {
+    // todo clean up, structure action vocab
 
+    computeExpandableTiles() {
+        const directions = [[1, 0], [1, -1], [0, 1], 
+                            [-1, 0], [-1, 1], [0, -1]]
+        this.expandable_tiles = [];
+        for (let tile of this.data.game.tiles) {
+            for (let dir of directions) {
+                let q = tile.q + dir[0];
+                let r = tile.r + dir[1];
+                if (!this.expandable_tiles.some((tile)=>{return tile.q == q && tile.r == r})
+                && !this.data.game.tiles.some((tile)=>{return tile.q == q && tile.r == r})) {
+                    this.expandable_tiles.push({q: q, r: r, cost: (Math.abs(q) + Math.abs(q+r) + Math.abs(r)) / 2});
+                }
             }
         }
     }
+
+    hexDistance(tilea, tileb) {
+        let a = {q: tilea.q, r: tilea.r, s: -tilea.r-tilea.q};
+        let b = {q: tileb.q, r: tileb.r, s: -tileb.r-tileb.q};
+        var vec = {q: a.q - b.q, r: a.r - b.r, s: a.s - b.s};
+        return Math.max(Math.abs(vec.q), Math.abs(vec.r), Math.abs(vec.s))
+    }
+
+    buildBuildingTiles() {
+        this.building_tiles = {};
+        // prepare buildings tile lists
+        for (let building of this.data.stat.buildings) {
+            this.building_tiles[building.name] = [];
+        }
+        // fill buildings tile lists
+        for (let tile of this.data.game.tiles) {
+
+            for (let building_name in tile.buildings) {
+                this.building_tiles[building_name].push(tile);
+            }
+        }
+    }
+
+    buildAllBuildableTiles() { // call on startup, on tileUpdate
+        this.buildable_tiles = {};
+        
+        // iterate buildings
+        for (let building of this.data.stat.buildings) {            
+            this.getBuildingBuildableTiles(building.name);
+        }
+    }
+    getBuildingBuildableTiles(building_name) { // called on build or unbuild in Data
+        this.buildable_tiles[building_name] = [];
+
+        // iterate tiles in combinations
+        for (let tile of this.data.game.tiles) {
+            if (!this.building_tiles[building_name].some(building_tile=>this.hexDistance(tile, building_tile) < 3)
+            && !this.expandable_tiles.some(border_tile=>this.hexDistance(tile, border_tile) < 2)) {
+                this.buildable_tiles[building_name].push({q: tile.q, r: tile.r})
+            }
+        }
+    }
+
     handleMouseLeave(evt) {
         this.hovered_tile = undefined;
+        this.hovered_coords = undefined;
+        let i = this.view.running_animations.findIndex(a => a.type == "highlight-tile");
+        if (i>-1) {this.view.running_animations.splice(i, 1);}
     }
     handleMouseMove(evt) {
         if (this.view.drag_from){
+            this.view.dragging = true;
             this.view.applyDrag(evt.offsetX*this.view.cvs_res, evt.offsetY*this.view.cvs_res);
         } else {
-            /*
-            // handle hover effects
-            let cursor_on_cvs = [(evt.offsetX-sess.trans_x)/sess.trans_scale,
-                                (evt.offsetY-sess.trans_y)/sess.trans_scale];
-
-    
-            let next_on_tg = []; // tg = tile-grid
-    
-            next_on_tg[1] = Math.round(cursor_on_cvs[1]/sess.vert_tile_dist);
-            next_on_tg[0] = Math.round(cursor_on_cvs[0]/sess.horz_tile_dist - next_on_tg[1]/2);
-    
-            let next_on_cvs = tgToCvs(next_on_tg);
-            // Math.pow(next_on_cvs[0]-cursor_on_cvs[0], 2) + Math.pow(next_on_cvs[1]-cursor_on_cvs[1], 2) <= Math.pow(sess.tile_size/2, 2)
-            // if hovering a tile
-
-            */
             let [q, r] = this.getHoveredTileCoords(evt);
-            //todo how hNDLE CURRENT ACTIONS
-           if (!this.hovered_tile || this.hovered_tile.q != q || this.hovered_tile.r != r) {
+            
+            // if first move or move onto other tile
+            if (!this.hovered_coords || this.hovered_coords.q != q || this.hovered_coords.r != r) {
+                this.hovered_coords = {q: q, r: r};
+
                 this.hovered_tile = this.data.game.tiles.find(t => t.q == q && t.r == r);
-
-                if (action_valid_coords[this.action].some(coords=>coords.q == q && coords.r == r)) {
-
-
-                }
-                // todo handle tile hover effects
-                let hover_type = undefined;
-                if (this.action_valid) { // todo way to deal with expanding (hovering not on existing tile)
-                    // set hover effect based on current action
-                    if (this.action.includes("lens")) {
-                        hover_type = "tile-hover";
-                    } else if (this.action.includes("flower")) {
-                        if (!this.hovered_tile.flowername) {
-                            hover_type = "tile-hover";
-                        }
-                    } else if (this.action.includes("shelf")) { // todo how to handle special items (gnomes etc.)
-                        if (!this.hovered_tile.flowername) {
-                            hover_type = "tile-hover";
-                        }
-                    } else if (this.action.includes("booster")) {
-                        if (!this.hovered_tile.boosters.includes(this.action.replace("booster-", ""))) {
-                            hover_type = "tile-hover";
-                        }
-                    } else if (this.action.includes("building")) {
-                        if (!this.hovered_tile.boosters.includes(this.action.replace("building-", ""))) {
-                            if (!game_data.tiles.filter(t=>[[1,0],[0,1],[-1,1],[-1,0],[0,-1],[1,-1]].some(loc=> t.locx == next_on_tg[0]+loc[0] && t.locy == next_on_tg[1]+loc[1]).some(t=>t.boosters.includes(this.action.replace("building-", ""))))) {
-                                hover_type = "building-hover";
-                            }
-                        }
-                    } else if (this.action.includes("sickle")) {
-                        if (this.hovered_tile.flowername) {
-                            hover_type = "tile-hover";
-                        }
-                    } else if (this.action.includes("seedcoll")) {
-                        if (this.hovered_tile.seeding) {
-                            hover_type = "tile-hover";
-                        }
-                    } else if (this.action.includes("spade")) {
-                        // hovering the diggable tiles
-                        if (this.items_highlight_tiles["spade"].find(loc => loc[0] == next_on_tg[0] && loc[1] == next_on_tg[1])) {
-                            hover_type = "tile-hover";
-                        }
-                    }
-                }    
-                // remove any hovering animations NONONONONONONONON
-                let i = this.view.running_animations.findIndex(a => a.type.includes("tile-hover"));
-                if (i>-1) {this.view.running_animations.splice(i, 1);}
-        
-                if (!hover_type) {
-                    this.hovered_tile = undefined;
-                } else {
-                    this.view.running_animations.push({starttime: undefined, type: hover_type, x: next_on_cvs[0], y: next_on_cvs[1], color: "white"});
-                } 
-
-                }
-           
+                this.checkActionValid(q,r)
+            }
         }
+    }
+
+    checkActionValid(q,r) {
+        this.action_valid = false;
+        console.log(this.action)
+        if (this.hovered_tile) {
+            if (this.action[0] == "tool") {
+                if (this.action[1] == "lens") {
+                    // valid as long on tile
+                    this.action_valid = true;
+                    // check for seeds
+                    if (this.seeding_tiles.indexOf(this.hovered_tile)>-1) {this.actionCollectSeeds();} // todo create seeding_tiles
+                    // check for infections
+                    for (let infection_name in this.hovered_tile.infections) {
+                        if (this.hovered_tile.infections[infection_name] == "hidden") {this.actionDiscoverInfection(infection_name);}
+                    }
+                } else if (this.action[1] == "sickle") {
+                    // check for flower
+                    if (this.hovered_tile.flowername) {this.action_valid = true;}
+
+                } else if (this.action[1] == "spade") {
+                    if (this.action[2] == "dig") {
+                        if (this.hovered_tile.flowername || this.hovered_tile.deconame) {this.action_valid = true;}
+                        
+                    } else if (this.action[2] == "place") {
+                        if (!this.hovered_tile.flowername && !this.hovered_tile.deconame) {this.action_valid = true;}
+
+                    }
+                }
+            
+            } else if (this.action[0] == "boost") {
+                this.action_valid = true;
+
+            } else if (this.action[0] == "flower") {
+                if (!this.hovered_tile.flowername && !this.hovered_tile.deconame) {this.action_valid = true;}
+                
+            } else if (this.action[0] == "building") {
+                if (this.buildable_tiles[this.action[1]].some(t=>t.q == q && t.r == r)) {this.action_valid = true;}
+                
+            } else if (this.action[0] == "deco") {
+                if (!this.hovered_tile.flowername && !this.hovered_tile.deconame) {this.action_valid = true;}
+
+            }
+
+        } else if (this.action[0] == "expand") {
+            if (this.expandable_tiles.some(t=>t.q == q && t.r == r)) {
+                this.action_valid = true;
+                this.hovered_tile = {q: q, r: r};
+            } 
+        }
+                    
+            // remove any hovering animations
+            let i = this.view.running_animations.findIndex(a => a.type == "highlight-tile");
+            if (i>-1) {this.view.running_animations.splice(i, 1);}
+            
+            let highlight_type = "highlight";
+            let highlight_color = "white";
+            let opacity = 0.5;
+            let scale = 1;
+
+            if (!this.action_valid) {
+                highlight_color = "red";
+            } 
+            if (this.action[0] == "building") {
+                highlight_type = "building-hl";
+                scale = 3
+            }
+            this.view.running_animations.push({type: "highlight-tile", q: q, r: r, image_name: highlight_type+"-"+highlight_color, opacity: opacity, scale: scale});
     }
 
     navTo(evt) {
@@ -683,24 +896,20 @@ class Control {
     
     alterRadios(evt) {
         const top = this.shop.scrollTop+150;
-        if (top < document.getElementById("boosters-header").offsetTop) {
-            document.getElementById("tools-radio").checked = true;
-        } else if (top < document.getElementById("flowers-header").offsetTop) {
-            document.getElementById("boosters-radio").checked = true;
-        } else if (top < document.getElementById("buildings-header").offsetTop) {
-            document.getElementById("flowers-radio").checked = true;
+        if (top < document.getElementById("boost-header").offsetTop) {
+            document.getElementById("tool-radio").checked = true;
+        } else if (top < document.getElementById("flower-header").offsetTop) {
+            document.getElementById("boost-radio").checked = true;
+        } else if (top < document.getElementById("building-header").offsetTop) {
+            document.getElementById("flower-radio").checked = true;
         } else {
-            document.getElementById("buildings-radio").checked = true;
+            document.getElementById("building-radio").checked = true;
         }
-    }
-
-    getShopInfo(action) {
-        return action;
     }
 
     contentHover(evt) {
         if (evt.type == "mouseenter") {
-            this.shop_info.innerHTML = this.getShopInfo(evt.currentTarget.parentElement.id);
+            this.shop_info.innerHTML = this.item_infos[evt.currentTarget.dataset.action+"-info"].innerHTML;
             let item_rect = evt.currentTarget.getBoundingClientRect();
             this.shop_info.style.setProperty("--pos", (item_rect.top + item_rect.height/2).toString()+"px");
             this.shop_info.classList.remove("hidden");
@@ -711,12 +920,12 @@ class Control {
 
     iconHover(evt) {
         if (evt.type == "mouseenter") {
-            this.icon_hover_action = evt.currentTarget.parentElement.id;
-            this.view.renderHighlight(evt.currentTarget.parentElement.id, this.view.hover_hl_render_ctx);
-            this.view.drawRenderedLayer(this.view.ctx_list[2], this.view.hover_hl_render_cvs);
+            this.icon_hover_action = evt.currentTarget.dataset.action.split("-");
+            this.view.renderHighlight(this.icon_hover_action, this.view.hover_hl_render_ctx);
+            this.view.displayRenderedMap(this.view.ctx_list[2], this.view.hover_hl_render_cvs);
         } else if (evt.type == "mouseleave") {
             this.icon_hover_action = undefined;
-            this.view.drawRenderedLayer(this.view.ctx_list[2], this.view.active_hl_render_cvs);
+            this.view.displayRenderedMap(this.view.ctx_list[2], this.view.active_hl_render_cvs);
         }
     }
 
@@ -756,39 +965,18 @@ class Control {
         return [q_h, r_h]
     }
 
-
-
-    computeExpandableTiles(tiles) {
-        const directions = [[1, 0], [1, -1], [0, 1], 
-                            [-1, 0], [-1, 1], [0, -1]]
-        this.expandable_tiles = [];
-        for (let tile of tiles) {
-            for (let dir of directions) {
-                let q = tile.q + dir[0];
-                let r = tile.r + dir[1];
-                if (!tiles.some((tile)=>{return tile.q == q && tile.r == r})) {
-                    this.expandable_tiles.push({q: q, r: r, cost: (abs(q)+ abs(q+r)+ abs(r)) / 2});
-                }
-            }
-        }
-    }
-
     setAction = (evt) => {
-        // to can be "shelf-something" or "flower-plant-something" or "booster-something"
+        // to can be "shelf-something" or "flower-plant-something" or "boost-something"
     
         for (let el of document.getElementsByClassName("active-item")) {
             // only one
             el.classList.remove("active-item");
         }
-        this.action = evt.currentTarget.parentElement.parentElement.id;
-        console.log(this.action)
+        this.action = evt.currentTarget.dataset.action.split("-");
         //this.ui_cvs.style = "--cursorloc: url(images/cursors/"+to+".png);"
-        document.getElementById(this.action).classList.add("active-item");
-    }
-
-    addTile(q, r) {
-        this.data.createTileAtQR(q, r);
-        computeExpandableTiles(this.data.game.tiles);
+        evt.currentTarget.classList.add("active-item");
+        this.view.renderHighlight(this.action, this.view.active_hl_render_ctx);
+        this.view.displayRenderedMap(this.view.ctx_list[2], this.view.active_hl_render_cvs);
     }
 
     gameLoop = (timestamp) => {
@@ -806,7 +994,7 @@ class Control {
             let season_params = getSeasonParams();
 
             for (let tile of game_data.tiles) {                
-                // update boosters (remove expired)
+                // update boosts (remove expired)
 
                 // llalalalalalal: wakeupprob
                 // check for flower
@@ -853,15 +1041,6 @@ class Control {
 }
 
 
-
-
-
-
-
-const addBuildingBoosters = () => {
-
-}
-
 const randomDecision = () => {
 
 }
@@ -872,9 +1051,6 @@ const changeSeason = (to_season) => {
     // update overall probabilities...and stuff
 }
 
-const addTile = (x, y) => {
-
-}
 
 
 const getSeasonParams = () => {
@@ -886,7 +1062,6 @@ window.onload = () => {
 
     // get element objects
     let control = new Control([STATIC_DATA, game_data]);
-    //applyTransform();
 
     control.gameLoop(0);
     control.view.animationLoop(0);
