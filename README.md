@@ -1,4 +1,4 @@
-# SQLgarden
+# SQLgarden - in construction
 
 boring database admin page? not with SQLgarden! Grow your beautiful database garden in this funny and detailed XAMPP based browser game!
 
